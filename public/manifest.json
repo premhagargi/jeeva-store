@@ -1,0 +1,21 @@
+{
+  "name": "Jeeva Mart",
+  "short_name": "Jeeva Mart",
+  "description": "Shop daily essentials with ease at Jeeva Mart. Your one-stop online store for groceries, household items, and more.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#000000",
+  "icons": [
+    {
+      "src": "/globe.svg",
+      "sizes": "192x192",
+      "type": "image/svg+xml"
+    },
+    {
+      "src": "/globe.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml"
+    }
+  ]
+}
