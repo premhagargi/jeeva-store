@@ -24,11 +24,71 @@ model Product {
   id          String     @id @default(uuid())
   name        String
   slug        String    @unique
+  imageUrl    String?
+  imagePublicId String?
   categoryId  String
   category    Category   @relation(fields: [categoryId], references: [id])
   inventory   Inventory?
+  orderItems  OrderItem[]
   createdAt   DateTime   @default(now())
   updatedAt   DateTime   @updatedAt
+}
+
+model Customer {
+  id        String   @id @default(uuid())
+  phone     String   @unique
+  name      String?
+  address   String?
+  orders    Order[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+enum OrderStatus {
+  PROCESSING
+  OUT_FOR_DELIVERY
+  DELIVERED
+  CANCELLED
+}
+
+model Order {
+  id          String      @id @default(uuid())
+  customerId  String
+  customer    Customer    @relation(fields: [customerId], references: [id])
+  status      OrderStatus @default(PROCESSING)
+  itemTotal   Float
+  deliveryFee Float       @default(0)
+  discount    Float       @default(0)
+  total       Float
+  phone       String
+  address     String
+  items       OrderItem[]
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  @@index([customerId])
+  @@index([phone])
+}
+
+model Setting {
+  key       String   @id
+  value     String
+  updatedAt DateTime @updatedAt
+}
+
+model OrderItem {
+  id            String  @id @default(uuid())
+  orderId       String
+  order         Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productId     String
+  product       Product @relation(fields: [productId], references: [id])
+  productName   String
+  unit          String
+  quantityValue Float?
+  price         Float
+  qty           Int
+
+  @@index([orderId])
 }
 
 model Inventory {

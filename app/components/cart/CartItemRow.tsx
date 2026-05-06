@@ -1,6 +1,8 @@
 "use client";
 
+import Image from "next/image";
 import { Minus, Plus, Trash2 } from "lucide-react";
+import { optimizeCld } from "@/lib/cloudinary-optimize";
 
 export interface CartItem {
   id: string;
@@ -11,6 +13,7 @@ export interface CartItem {
   emoji: string;
   bg: string;
   qty: number;
+  imageUrl?: string | null;
 }
 
 interface CartItemRowProps {
@@ -26,14 +29,24 @@ export default function CartItemRow({
 }: CartItemRowProps) {
   return (
     <div className="flex items-center gap-3 py-3">
-      {/* Emoji thumbnail */}
       <div
-        className={`w-14 h-14 rounded-2xl flex items-center justify-center text-2xl shrink-0 ${item.bg}`}
+        className={`w-14 h-14 rounded-2xl flex items-center justify-center text-2xl shrink-0 overflow-hidden relative ${
+          item.imageUrl ? "bg-gray-50" : item.bg
+        }`}
       >
-        {item.emoji}
+        {item.imageUrl ? (
+          <Image
+            src={optimizeCld(item.imageUrl, { width: 96 })}
+            alt={item.name}
+            fill
+            sizes="56px"
+            className="object-cover"
+          />
+        ) : (
+          item.emoji
+        )}
       </div>
 
-      {/* Name + unit + price */}
       <div className="flex-1 min-w-0">
         <p className="text-[13.5px] font-semibold text-gray-800 leading-snug truncate">
           {item.name}
@@ -51,7 +64,6 @@ export default function CartItemRow({
         </div>
       </div>
 
-      {/* Qty stepper */}
       <div className="flex items-center gap-1 shrink-0">
         <button
           onClick={() => onDecrement(item.id)}

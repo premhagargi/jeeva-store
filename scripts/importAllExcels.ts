@@ -79,11 +79,9 @@ async function processExcelFile(filePath: string, filename: string) {
 
       const productName = cleanProductName(itemName);
 
-      // Parse quantity
-      const parsedQuantity = parseQuantity(String(quantity || ''));
-      if (!parsedQuantity) {
-        throw new Error(`Invalid quantity: ${quantity}`);
-      }
+      // Parse quantity; fall back to a single-piece default when blank or unparseable
+      const parsedQuantity =
+        parseQuantity(String(quantity || '')) ?? { value: 1, unit: 'pc' };
 
       // Generate product slug: name + quantityValue + unit
       const productSlug = slugifyName(`${productName} ${parsedQuantity.value} ${parsedQuantity.unit}`);
