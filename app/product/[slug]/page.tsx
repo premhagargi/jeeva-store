@@ -3,7 +3,11 @@
 import Image from "next/image";
 import { notFound } from "next/navigation";
 import { ChevronLeft, Loader2 } from "lucide-react";
-import { useState, use } from "react";
+import { useState, use, useEffect } from "react";
+import { styleFor } from "@/lib/category-style";
+import { optimizeCld } from "@/lib/cloudinary-optimize";
+import AddToCartButton from "@/app/components/products/AddToCartButton";
+import { getProductBySlug } from "@/lib/product-service";
 
 export default function ProductPage({
   params,

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import OrderCard, { Order } from "../components/orders/OrderCard";
 import EmptyOrders from "../components/orders/EmptyOrders";
@@ -36,7 +36,7 @@ function formatDate(d: Date): { date: string; time: string } {
   };
 }
 
-export default function OrdersPage() {
+function OrdersContent() {
   const searchParams = useSearchParams();
   const phone = searchParams.get("phone")?.trim() ?? "";
   const placed = searchParams.get("placed");
@@ -117,5 +117,13 @@ export default function OrdersPage() {
         )}
       </div>
     </div>
+  );
+}
+
+export default function OrdersPage() {
+  return (
+    <Suspense fallback={<OrdersSkeleton />}>
+      <OrdersContent />
+    </Suspense>
   );
 }

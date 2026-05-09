@@ -1,10 +1,9 @@
 import { prisma } from "@/lib/prisma";
 import { styleFor } from "@/lib/category-style";
-import type { NextRequest } from "next";
 
 export const runtime = "nodejs";
 
-export async function GET(request: NextRequest) {
+export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const phone = searchParams.get("phone") ?? "";
 

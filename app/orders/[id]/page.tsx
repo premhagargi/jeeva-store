@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, use, Suspense } from "react";
 import { notFound } from "next/navigation";
 import { ChevronLeft, MapPin, Phone, Check, Package, Truck, Home, X, Loader2 } from "lucide-react";
 import { styleFor } from "@/lib/category-style";
@@ -9,7 +9,8 @@ import OrderStatusBadge from "@/app/components/orders/OrderStatusBadge";
 import ReorderButton from "./ReorderButton";
 import CancelButton from "./CancelButton";
 import { Order, getOrderById } from "@/lib/order-service";
-import { use } from "react";
+
+type OrderStatus = "processing" | "out_for_delivery" | "delivered" | "cancelled";
 
 const STATUS_MAP: Record<string, OrderStatus> = {
   PROCESSING: "processing",
@@ -24,7 +25,7 @@ const TIMELINE: Array<{ key: OrderStatus; label: string; icon: any }> = [
   { key: "delivered", label: "Delivered", icon: Home },
 ];
 
-export default function OrderDetailPage({
+function OrderDetailContent({
   params,
   searchParams,
 }: {
@@ -106,14 +107,7 @@ export default function OrderDetailPage({
   const status = STATUS_MAP[order.status] ?? "processing";
   const isCancelled = status === "cancelled";
 
-  const placedAt = order.createdAt.toLocaleString("en-IN", {
-    day: "numeric",
-    month: "short",
-    year: "numeric",
-    hour: "numeric",
-    minute: "2-digit",
-    hour12: true,
-  });
+  const placedAt = `${order.date}, ${order.time}`;
 
   return (
     <div className="min-h-screen bg-gray-50 pb-32">
@@ -217,7 +211,7 @@ export default function OrderDetailPage({
         <div className="flex flex-col gap-1.5">
           <div className="flex justify-between text-[13px] text-gray-500">
             <span>Item total</span>
-            <span>₹{order.itemTotal}</span>
+            <span>₹{order.items.reduce((s, i) => s + i.price, 0)}</span>
           </div>
           <div className="flex justify-between text-[13px] text-gray-500">
             <span>Delivery fee</span>
@@ -281,5 +275,19 @@ export default function OrderDetailPage({
         <ReorderButton lines={order.reorderLines} />
       </div>
     </div>
+  );
+}
+
+export default function OrderDetailPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ id: string }>;
+  searchParams: Promise<{ placed?: string }>;
+}) {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-gray-50 animate-pulse" />}>
+      <OrderDetailContent params={params} searchParams={searchParams} />
+    </Suspense>
   );
 }
