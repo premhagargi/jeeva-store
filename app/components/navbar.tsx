@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { Search, User, MapPin, ChevronDown, X } from "lucide-react";
 
 interface NavbarProps {
@@ -14,8 +14,11 @@ export default function Navbar({
   location = "Bhagya Nagar, 3rd Cross",
 }: NavbarProps) {
   const router = useRouter();
+  const pathname = usePathname();
   const [searchQuery, setSearchQuery] = useState("");
   const [searchFocused, setSearchFocused] = useState(false);
+
+  const showSearchBar = pathname !== "/search";
 
   return (
     <nav className="sticky top-0 z-50 w-full bg-white shadow-sm px-4 pt-4 pb-3 flex flex-col gap-3">
@@ -64,6 +67,7 @@ export default function Navbar({
       </div>
 
       {/* Search Bar */}
+      {showSearchBar && (
       <form
         onSubmit={(e) => {
           e.preventDefault();
@@ -101,6 +105,7 @@ export default function Navbar({
           </button>
         )}
       </form>
+      )}
     </nav>
   );
 }
