@@ -9,6 +9,7 @@ import OrderStatusBadge from "@/app/components/orders/OrderStatusBadge";
 import ReorderButton from "./ReorderButton";
 import CancelButton from "./CancelButton";
 import { Order, getOrderById } from "@/lib/order-service";
+import { use } from "react";
 
 const STATUS_MAP: Record<string, OrderStatus> = {
   PROCESSING: "processing",
@@ -33,8 +34,8 @@ export default function OrderDetailPage({
   const [loading, setLoading] = useState(true);
   const [order, setOrder] = useState<Order | null>(null);
 
-  const { id } = await params;
-  const sp = await searchParams;
+  const { id } = use(params);
+  const sp = use(searchParams);
 
   useEffect(() => {
     async function load() {

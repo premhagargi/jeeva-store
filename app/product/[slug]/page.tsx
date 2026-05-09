@@ -3,11 +3,7 @@
 import Image from "next/image";
 import { notFound } from "next/navigation";
 import { ChevronLeft, Loader2 } from "lucide-react";
-import { useState } from "react";
-import { styleFor } from "@/lib/category-style";
-import { optimizeCld } from "@/lib/cloudinary-optimize";
-import AddToCartButton from "@/app/components/products/AddToCartButton";
-import { getProductBySlug } from "@/lib/product-service";
+import { useState, use } from "react";
 
 export default function ProductPage({
   params,
@@ -17,7 +13,7 @@ export default function ProductPage({
   const [loading, setLoading] = useState(true);
   const [product, setProduct] = useState<any>(null);
 
-  const { slug } = await params;
+  const { slug } = use(params);
 
   useEffect(() => {
     async function load() {
