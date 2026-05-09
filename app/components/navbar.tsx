@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
-import { Search, User, MapPin, ChevronDown, X } from "lucide-react";
+import { User, MapPin, ChevronDown } from "lucide-react";
+import SearchRecommendations from "./SearchRecommendations";
 
 interface NavbarProps {
   shopName?: string;
@@ -15,8 +15,6 @@ export default function Navbar({
 }: NavbarProps) {
   const router = useRouter();
   const pathname = usePathname();
-  const [searchQuery, setSearchQuery] = useState("");
-  const [searchFocused, setSearchFocused] = useState(false);
 
   const showSearchBar = pathname !== "/search";
 
@@ -58,7 +56,7 @@ export default function Navbar({
 
           {/* Account avatar */}
           <button
-            onClick={() => router.push('/account')}
+            onClick={() => router.push("/account")}
             className="w-9 h-9 rounded-full bg-gradient-to-br from-emerald-400 to-teal-500 flex items-center justify-center shadow-md hover:shadow-lg active:scale-95 transition-all cursor-pointer"
           >
             <User size={16} className="text-white" />
@@ -66,46 +64,8 @@ export default function Navbar({
         </div>
       </div>
 
-      {/* Search Bar */}
-      {showSearchBar && (
-      <form
-        onSubmit={(e) => {
-          e.preventDefault();
-          const q = searchQuery.trim();
-          if (q) router.push(`/search?q=${encodeURIComponent(q)}`);
-        }}
-        className={`flex items-center gap-2 bg-gray-100 rounded-xl px-3 py-2.5 transition-all duration-200 ${
-          searchFocused
-            ? "bg-white ring-2 ring-emerald-400 shadow-md"
-            : "hover:bg-gray-200"
-        }`}
-      >
-        <Search
-          size={16}
-          className={`shrink-0 transition-colors ${
-            searchFocused ? "text-emerald-500" : "text-gray-400"
-          }`}
-        />
-        <input
-          type="text"
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          onFocus={() => setSearchFocused(true)}
-          onBlur={() => setSearchFocused(false)}
-          placeholder='Search for "rice", "soap"...'
-          className="flex-1 bg-transparent text-sm text-gray-700 placeholder-gray-400 outline-none"
-        />
-        {searchQuery && (
-          <button
-            type="button"
-            onClick={() => setSearchQuery("")}
-            className="text-gray-400 hover:text-gray-600 transition-colors"
-          >
-            <X size={14} />
-          </button>
-        )}
-      </form>
-      )}
+      {/* Search Bar with Recommendations */}
+      {showSearchBar && <SearchRecommendations />}
     </nav>
   );
 }

@@ -1,22 +1,73 @@
+"use client";
+
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { ChevronLeft, Search as SearchIcon } from "lucide-react";
-import { prisma } from "@/lib/prisma";
-import { styleFor } from "@/lib/category-style";
 import ProductCard from "@/app/components/products/ProductCard";
+import { ShimmerCardGrid } from "@/app/components/ShimmerCard";
 
-export default async function SearchPage({
+interface Product {
+  id: string;
+  slug: string;
+  name: string;
+  unit: string;
+  quantityValue: number | null;
+  price: number;
+  emoji: string;
+  bg: string;
+  imageUrl: string | null;
+  isAvailable: boolean;
+}
+
+export default function SearchPage({
   searchParams,
 }: {
   searchParams: Promise<{ q?: string }>;
 }) {
-  const { q } = await searchParams;
-  const query = (q ?? "").trim();
-  const terms = query.split(/\s+/).filter(Boolean);
+  const [query, setQuery] = useState("");
+  const [recommendations, setRecommendations] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [hasSearched, setHasSearched] = useState(false);
 
-  let products: Awaited<ReturnType<typeof loadProducts>> = [];
-  if (terms.length > 0) {
-    products = await loadProducts(terms);
+  // Read initial search params
+  useEffect(() => {
+    const getParams = async () => {
+      const { q } = await searchParams;
+      const initialQuery = (q ?? "").trim();
+      setQuery(initialQuery);
+      if (initialQuery) {
+        await performSearch(initialQuery);
+      }
+    };
+    getParams();
+  }, [searchParams]);
+
+  async function performSearch(searchQuery: string) {
+    setLoading(true);
+    setHasSearched(true);
+    try {
+      const res = await fetch(`/api/search?q=${encodeURIComponent(searchQuery)}`);
+      if (!res.ok) {
+        setRecommendations([]);
+        return;
+      }
+      const data = await res.json();
+      setRecommendations(data.products || []);
+    } catch {
+      setRecommendations([]);
+    } finally {
+      setLoading(false);
+    }
   }
+
+  const handleSearch = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const q = query.trim();
+    if (!q) return;
+    // Replace URL without re-running server search
+    window.history.replaceState(null, "", `/search?q=${encodeURIComponent(q)}`);
+    await performSearch(q);
+  };
 
   return (
     <div className="min-h-screen bg-gray-50 pb-24">
@@ -28,12 +79,13 @@ export default async function SearchPage({
           <ChevronLeft size={20} className="text-gray-700" />
         </Link>
 
-        <form action="/search" method="get" className="flex-1">
+        <form onSubmit={handleSearch} className="flex-1">
           <div className="flex items-center gap-2 bg-gray-100 rounded-xl px-3 py-2.5">
             <SearchIcon size={16} className="text-gray-400 shrink-0" />
             <input
               name="q"
-              defaultValue={query}
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
               autoFocus
               placeholder="Search products, categories..."
               className="flex-1 bg-transparent text-sm text-gray-700 placeholder-gray-400 outline-none"
@@ -42,12 +94,21 @@ export default async function SearchPage({
         </form>
       </div>
 
-      {query === "" ? (
+      {!hasSearched && query === "" ? (
         <div className="px-8 py-16 text-center">
           <div className="text-5xl mb-3">🔎</div>
           <p className="text-[14px] text-gray-500">Type to search across all products.</p>
         </div>
-      ) : products.length === 0 ? (
+      ) : loading ? (
+        // Shimmer skeleton while searching
+        <div className="px-4 pt-4">
+          <div className="flex items-center gap-2 mb-3">
+            <LoaderSpinner />
+            <p className="text-[12px] text-gray-400">Searching for "{query}"...</p>
+          </div>
+          <ShimmerCardGrid count={6} />
+        </div>
+      ) : recommendations.length === 0 && hasSearched ? (
         <div className="px-8 py-16 text-center">
           <div className="text-5xl mb-3">🤔</div>
           <p className="text-[14px] font-semibold text-gray-700">No matches for "{query}"</p>
@@ -56,10 +117,10 @@ export default async function SearchPage({
       ) : (
         <>
           <p className="px-4 pt-4 pb-2 text-[12px] text-gray-500">
-            {products.length} result{products.length === 1 ? "" : "s"} for "{query}"
+            {recommendations.length} result{recommendations.length === 1 ? "" : "s"} for "{query}"
           </p>
           <div className="px-4 pb-4 grid grid-cols-2 gap-3">
-            {products.map((p) => (
+            {recommendations.map((p) => (
               <ProductCard key={p.id} product={p} />
             ))}
           </div>
@@ -69,37 +130,11 @@ export default async function SearchPage({
   );
 }
 
-async function loadProducts(terms: string[]) {
-  const rows = await prisma.product.findMany({
-    where: {
-      AND: terms.map((t) => ({
-        OR: [
-          { name: { contains: t, mode: "insensitive" as const } },
-          { category: { name: { contains: t, mode: "insensitive" as const } } },
-        ],
-      })),
-    },
-    include: { inventory: true, category: true },
-    orderBy: { name: "asc" },
-    take: 100,
-  });
-
-  return rows
-    .filter((p) => p.inventory)
-    .map((p) => {
-      const inv = p.inventory!;
-      const style = styleFor(p.category.name);
-      return {
-        id: p.id,
-        slug: p.slug,
-        name: p.name,
-        unit: inv.unit,
-        quantityValue: inv.quantityValue,
-        price: inv.price ?? 0,
-        emoji: style.emoji,
-        bg: style.bg,
-        imageUrl: p.imageUrl,
-        isAvailable: inv.isAvailable && inv.stockQty > 0,
-      };
-    });
+function LoaderSpinner() {
+  return (
+    <svg className="animate-spin h-4 w-4 text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+    </svg>
+  );
 }

@@ -1,14 +1,25 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { ShoppingCart, ChevronRight, MapPin, AlertCircle } from "lucide-react";
 import CartItemRow from "../components/cart/CartItemRow";
+import CartSkeleton from "../components/cart/CartSkeleton";
 import { useCart, increment, decrement } from "@/lib/cart";
 
 const DELIVERY_FEE = 0;
 
 export default function CartView({ minOrderValue }: { minOrderValue: number }) {
   const items = useCart();
+  const [hydrated, setHydrated] = useState(false);
+
+  useEffect(() => {
+    setHydrated(true);
+  }, []);
+
+  if (!hydrated) {
+    return <CartSkeleton />;
+  }
 
   const itemTotal = items.reduce((s, i) => s + i.price * i.qty, 0);
   const grandTotal = itemTotal + DELIVERY_FEE;
