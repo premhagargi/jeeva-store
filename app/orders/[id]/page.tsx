@@ -8,7 +8,7 @@ import OrderItemRow from "@/app/components/orders/OrderItemRow";
 import OrderStatusBadge from "@/app/components/orders/OrderStatusBadge";
 import ReorderButton from "./ReorderButton";
 import CancelButton from "./CancelButton";
-import { Order, getOrderById } from "@/lib/order-service";
+import type { Order } from "@/lib/order-service";
 
 type OrderStatus = "processing" | "out_for_delivery" | "delivered" | "cancelled";
 
@@ -39,17 +39,27 @@ function OrderDetailContent({
   const sp = use(searchParams);
 
   useEffect(() => {
+    let cancelled = false;
     async function load() {
       try {
-        const o = await getOrderById(id);
-        setOrder(o);
+        const res = await fetch(`/api/orders/${encodeURIComponent(id)}`);
+        if (cancelled) return;
+        if (!res.ok) {
+          setOrder(null);
+        } else {
+          const data = await res.json();
+          if (!cancelled) setOrder(data.order ?? null);
+        }
       } catch {
-        notFound();
+        if (!cancelled) setOrder(null);
       } finally {
-        setLoading(false);
+        if (!cancelled) setLoading(false);
       }
     }
     load();
+    return () => {
+      cancelled = true;
+    };
   }, [id]);
 
   if (loading) {

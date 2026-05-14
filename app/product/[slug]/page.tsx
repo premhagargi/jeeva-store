@@ -7,7 +7,6 @@ import { useState, use, useEffect } from "react";
 import { styleFor } from "@/lib/category-style";
 import { optimizeCld } from "@/lib/cloudinary-optimize";
 import AddToCartButton from "@/app/components/products/AddToCartButton";
-import { getProductBySlug } from "@/lib/product-service";
 
 export default function ProductPage({
   params,
@@ -20,18 +19,32 @@ export default function ProductPage({
   const { slug } = use(params);
 
   useEffect(() => {
+    let cancelled = false;
     async function load() {
       try {
-        const p = await getProductBySlug(slug);
-        setProduct(p);
+        const res = await fetch(`/api/products/${encodeURIComponent(slug)}`);
+        if (cancelled) return;
+        if (!res.ok) {
+          setProduct(null);
+        } else {
+          const data = await res.json();
+          if (!cancelled) setProduct(data.product ?? null);
+        }
       } catch {
-        notFound();
+        if (!cancelled) setProduct(null);
       } finally {
-        setLoading(false);
+        if (!cancelled) setLoading(false);
       }
     }
     load();
+    return () => {
+      cancelled = true;
+    };
   }, [slug]);
+
+  if (!loading && !product) {
+    notFound();
+  }
 
   if (loading || !product) {
     return (
@@ -146,7 +159,7 @@ export default function ProductPage({
         </div>
       </div>
 
-      <div className="fixed bottom-20 left-0 right-0 max-w-md mx-auto px-4 z-40">
+      <div className="fixed bottom-4 left-0 right-0 max-w-md mx-auto px-4 z-40">
         <AddToCartButton
           productId={product.id}
           slug={product.slug}

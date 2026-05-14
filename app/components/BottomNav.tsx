@@ -13,6 +13,8 @@ const tabs = [
 export default function BottomNav() {
   const pathname = usePathname();
 
+  if (pathname?.startsWith("/product/")) return null;
+
   return (
     <>
       {/* Spacer so page content isn't hidden behind the bar */}

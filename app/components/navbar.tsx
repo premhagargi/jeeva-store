@@ -17,6 +17,9 @@ export default function Navbar({
   const pathname = usePathname();
 
   const showSearchBar = pathname !== "/search";
+  const hideNavbar = pathname?.startsWith("/product/");
+
+  if (hideNavbar) return null;
 
   return (
     <nav className="sticky top-0 z-50 w-full bg-white shadow-sm px-4 pt-4 pb-3 flex flex-col gap-3">

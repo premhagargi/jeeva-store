@@ -1,13 +1,11 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import {
   MapPin, ShoppingBag, Heart, Tag, HelpCircle,
   FileText, LogOut, ChevronRight, Bell, Shield,
-  Loader2,
 } from "lucide-react";
 import Link from "next/link";
-import AccountSkeleton from "@/app/components/accounts/AccountSkeleton";
 
 const menuSections = [
   {
@@ -35,18 +33,7 @@ const menuSections = [
 ];
 
 export default function AccountPage() {
-  const [loading, setLoading] = useState(true);
   const [notificationsOn, setNotificationsOn] = useState(true);
-
-  useEffect(() => {
-    // Simulate data fetching
-    const timer = setTimeout(() => setLoading(false), 300);
-    return () => clearTimeout(timer);
-  }, []);
-
-  if (loading) {
-    return <AccountSkeleton />;
-  }
 
   return (
     <div className="min-h-screen bg-gray-50 pb-28">

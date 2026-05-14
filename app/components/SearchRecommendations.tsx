@@ -4,8 +4,6 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { Search, X, Loader2 } from "lucide-react";
 import Link from "next/link";
-import ProductCard from "./products/ProductCard";
-import ShimmerCard, { ShimmerCardGrid } from "./ShimmerCard";
 
 interface Product {
   id: string;
@@ -150,7 +148,14 @@ export default function SearchRecommendations() {
       {showResults && (query.length >= MIN_QUERY_LENGTH || recommendations.length > 0) && (
         <div className="absolute top-full left-0 right-0 mt-1.5 bg-white rounded-2xl border border-gray-100 shadow-xl z-50 max-h-[420px] overflow-y-auto">
           {loading ? (
-            <ShimmerCardGrid count={4} />
+            <div className="py-2">
+              {[...Array(4)].map((_, i) => (
+                <div key={i} className="flex items-center gap-3 px-4 py-2.5">
+                  <div className="h-4 w-4 rounded bg-gray-100 animate-pulse" />
+                  <div className="h-3 flex-1 rounded bg-gray-100 animate-pulse" />
+                </div>
+              ))}
+            </div>
           ) : recommendations.length === 0 ? (
             query.length >= MIN_QUERY_LENGTH ? (
               <div className="px-4 py-6 text-center">
@@ -160,24 +165,22 @@ export default function SearchRecommendations() {
               </div>
             ) : null
           ) : (
-            <>
-              <div className="px-3 py-2">
-                <p className="text-[11px] text-gray-400 font-medium">
-                  {recommendations.length} result{recommendations.length !== 1 ? "s" : ""} for "{query}"
-                </p>
-              </div>
-              <div className="grid grid-cols-2 gap-2 px-3 pb-3">
-                {recommendations.map((p) => (
+            <ul className="py-1">
+              {recommendations.map((p) => (
+                <li key={p.id}>
                   <Link
-                    key={p.id}
                     href={`/product/${p.slug}`}
                     onClick={handleResultClick}
+                    className="flex items-center gap-3 px-4 py-2.5 hover:bg-gray-50 active:bg-gray-100 transition-colors"
                   >
-                    <ProductCard product={p} />
+                    <Search size={14} className="shrink-0 text-gray-400" />
+                    <span className="text-[14px] text-gray-700 truncate">
+                      {p.name}
+                    </span>
                   </Link>
-                ))}
-              </div>
-            </>
+                </li>
+              ))}
+            </ul>
           )}
         </div>
       )}

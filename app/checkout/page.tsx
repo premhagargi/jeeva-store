@@ -84,7 +84,7 @@ export default function CheckoutPage() {
         <h1 className="text-[16px] font-bold text-gray-900">Checkout</h1>
       </div>
 
-      <form onSubmit={handleSubmit} className="px-4 py-4 flex flex-col gap-4">
+      <form id="checkout-form" onSubmit={handleSubmit} className="px-4 py-4 flex flex-col gap-4">
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 flex flex-col gap-3">
           <p className="text-[14px] font-bold text-gray-900">Contact</p>
           <input
@@ -152,15 +152,26 @@ export default function CheckoutPage() {
             {error}
           </div>
         )}
+      </form>
 
+      <div className="fixed bottom-20 left-0 right-0 max-w-md mx-auto px-4 z-40">
         <button
           type="submit"
+          form="checkout-form"
           disabled={isPending}
-          className="w-full bg-emerald-500 text-white rounded-2xl py-4 font-bold text-[15px] shadow-xl shadow-emerald-300/50 active:scale-[0.98] transition-transform disabled:opacity-60"
+          className="w-full bg-emerald-500 text-white rounded-2xl py-4 flex items-center justify-between px-5 shadow-xl shadow-emerald-300/50 active:scale-[0.98] transition-transform disabled:opacity-60"
         >
-          {isPending ? "Placing order..." : `Place Order · ₹${itemTotal}`}
+          <div className="text-left">
+            <p className="text-[11px] font-medium opacity-80">
+              {items.length} item{items.length > 1 ? "s" : ""}
+            </p>
+            <p className="text-[16px] font-bold">₹{itemTotal}</p>
+          </div>
+          <div className="text-[14px] font-bold">
+            {isPending ? "Placing..." : "Place Order"}
+          </div>
         </button>
-      </form>
+      </div>
     </div>
   );
 }
