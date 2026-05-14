@@ -1,6 +1,6 @@
-import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { styleFor } from "@/lib/category-style";
+import CategoryLink from "./CategoryLink";
 
 export default async function CategorySections() {
   const categories = await prisma.category.findMany({
@@ -23,7 +23,7 @@ export default async function CategorySections() {
         {live.map((cat) => {
           const style = styleFor(cat.name);
           return (
-            <Link
+            <CategoryLink
               key={cat.id}
               href={`/category/${cat.slug}`}
               className="flex flex-col items-center gap-2 group w-full"
@@ -39,7 +39,7 @@ export default async function CategorySections() {
               <span className="text-[10px] text-gray-400 -mt-1.5">
                 {cat._count.products} items
               </span>
-            </Link>
+            </CategoryLink>
           );
         })}
       </div>
