@@ -64,9 +64,9 @@ function OrderDetailContent({
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 pb-32 animate-pulse">
+      <div className="min-h-screen bg-gray-50 pb-32">
         <div className="sticky top-0 z-30 bg-white border-b border-gray-100 px-4 py-3 flex items-center gap-2">
-          <div className="w-9 h-9 rounded-xl bg-gray-200" />
+          <div className="w-9 h-9 rounded-xl bg-gray-100" />
           <div className="flex-1 min-w-0">
             <div className="h-5 bg-gray-100 rounded w-44 mb-1" />
             <div className="h-3 bg-gray-100 rounded w-32" />
@@ -78,7 +78,7 @@ function OrderDetailContent({
           <div className="flex flex-col gap-3">
             {[...Array(3)].map((_, i) => (
               <div key={i} className="flex items-start gap-3">
-                <div className="w-9 h-9 rounded-full bg-gray-200 shrink-0" />
+                <div className="w-9 h-9 rounded-full bg-gray-100 shrink-0" />
                 <div className="pt-2 flex-1">
                   <div className="h-3 bg-gray-100 rounded w-32 mb-1" />
                   <div className="h-3 bg-gray-100 rounded w-48" />
@@ -90,7 +90,7 @@ function OrderDetailContent({
         {[...Array(2)].map((_, idx) => (
           <div key={idx} className="bg-white mt-3 mx-4 rounded-2xl border border-gray-100 shadow-sm p-4">
             <div className="flex items-center gap-3">
-              <div className="w-11 h-11 rounded-xl bg-gray-200 shrink-0" />
+              <div className="w-11 h-11 rounded-xl bg-gray-100 shrink-0" />
               <div className="flex-1 min-w-0">
                 <div className="h-3 bg-gray-100 rounded w-5/6 mb-1" />
                 <div className="h-3 bg-gray-100 rounded w-1/3" />
@@ -99,15 +99,6 @@ function OrderDetailContent({
             </div>
           </div>
         ))}
-        <div className="bg-white mt-3 mx-4 rounded-2xl border border-gray-100 shadow-sm p-4">
-          <div className="h-4 bg-gray-100 rounded w-20 mb-3" />
-          {[...Array(3)].map((_, i) => (
-            <div key={i} className="flex justify-between mb-1">
-              <div className="h-3 bg-gray-100 rounded w-16" />
-              <div className="h-3 bg-gray-100 rounded w-14" />
-            </div>
-          ))}
-        </div>
       </div>
     );
   }
@@ -183,7 +174,7 @@ function OrderDetailContent({
                     </div>
                     {i < TIMELINE.length - 1 && (
                       <div
-                        className={`w-0.5 h-6 ${done && i < currentIndex ? "bg-emerald-500" : "bg-gray-200"}`}
+                        className={`w-0.5 h-6 ${done && i < currentIndex ? "bg-emerald-500" : "bg-gray-100"}`}
                       />
                     )}
                   </div>
@@ -296,7 +287,7 @@ export default function OrderDetailPage({
   searchParams: Promise<{ placed?: string }>;
 }) {
   return (
-    <Suspense fallback={<div className="min-h-screen bg-gray-50 animate-pulse" />}>
+    <Suspense fallback={<div className="min-h-screen bg-gray-50" />}>
       <OrderDetailContent params={params} searchParams={searchParams} />
     </Suspense>
   );

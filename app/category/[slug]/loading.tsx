@@ -1,6 +1,6 @@
 export default function CategoryLoading() {
   return (
-    <div className="min-h-screen bg-gray-50 pb-24 animate-pulse">
+    <div className="min-h-screen bg-gray-50 pb-24">
       <div className="sticky top-0 z-30 bg-white border-b border-gray-100 px-4 py-3 flex items-center gap-2">
         <div className="w-9 h-9 rounded-xl bg-gray-100" />
         <div className="flex-1 min-w-0">
