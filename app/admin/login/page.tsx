@@ -1,4 +1,5 @@
 import { login } from "./actions";
+import SubmitButton from "./SubmitButton";
 
 export default async function AdminLoginPage({
   searchParams,
@@ -39,12 +40,7 @@ export default async function AdminLoginPage({
           {sp.error && (
             <p className="text-[12px] text-red-500 font-medium">Wrong username or password</p>
           )}
-          <button
-            type="submit"
-            className="bg-emerald-500 text-white font-bold text-[14px] py-2.5 rounded-xl active:scale-[0.98] transition-transform"
-          >
-            Sign in
-          </button>
+          <SubmitButton />
         </form>
       </div>
     </div>

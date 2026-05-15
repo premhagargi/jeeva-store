@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { saveOrderAdminNotes } from "../actions";
-import { Save } from "lucide-react";
+import { Save, Loader2 } from "lucide-react";
 
 export default function AdminNotes({ orderId, initial }: { orderId: string; initial: string }) {
   const [notes, setNotes] = useState(initial);
@@ -34,8 +34,8 @@ export default function AdminNotes({ orderId, initial }: { orderId: string; init
         }
         className="self-end text-[11px] font-bold flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-emerald-50 text-emerald-700 disabled:opacity-50"
       >
-        <Save size={12} />
-        {saved ? "Saved ✓" : "Save"}
+        {pending ? <Loader2 size={12} className="animate-spin" /> : <Save size={12} />}
+        {pending ? "Saving..." : saved ? "Saved ✓" : "Save"}
       </button>
     </div>
   );

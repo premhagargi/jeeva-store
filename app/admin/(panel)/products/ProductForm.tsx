@@ -3,7 +3,7 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { ChevronLeft } from "lucide-react";
+import { ChevronLeft, Loader2 } from "lucide-react";
 import { createProduct, updateProduct } from "./actions";
 import type { ProductInput } from "./types";
 
@@ -179,9 +179,18 @@ export default function ProductForm({ mode, productId, initial, categories }: Pr
           <button
             type="submit"
             disabled={pending}
-            className="flex-1 bg-emerald-500 text-white font-bold text-[14px] py-2.5 rounded-xl active:scale-[0.98] transition-transform disabled:opacity-60"
+            className="flex-1 bg-emerald-500 text-white font-bold text-[14px] py-2.5 rounded-xl active:scale-[0.98] transition-transform disabled:opacity-60 flex items-center justify-center gap-2"
           >
-            {pending ? "Saving..." : mode === "create" ? "Create product" : "Save changes"}
+            {pending ? (
+              <>
+                <Loader2 size={14} className="animate-spin" />
+                Saving...
+              </>
+            ) : mode === "create" ? (
+              "Create product"
+            ) : (
+              "Save changes"
+            )}
           </button>
         </div>
 

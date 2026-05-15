@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { saveCustomer } from "../actions";
-import { Save, Flag } from "lucide-react";
+import { Save, Flag, Loader2 } from "lucide-react";
 
 interface Props {
   customer: {
@@ -76,8 +76,8 @@ export default function CustomerEditor({ customer }: Props) {
         disabled={pending}
         className="bg-emerald-500 text-white font-bold text-[14px] py-2.5 rounded-xl flex items-center justify-center gap-2 disabled:opacity-60"
       >
-        <Save size={14} />
-        Save changes
+        {pending ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
+        {pending ? "Saving..." : "Save changes"}
       </button>
       {saved && <p className="text-[11px] text-emerald-600 font-semibold">Saved ✓</p>}
       {error && <p className="text-[11px] text-red-500 font-medium">{error}</p>}
