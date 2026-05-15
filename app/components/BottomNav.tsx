@@ -14,6 +14,7 @@ export default function BottomNav() {
   const pathname = usePathname();
 
   if (pathname?.startsWith("/product/")) return null;
+  if (pathname?.startsWith("/admin")) return null;
 
   return (
     <>

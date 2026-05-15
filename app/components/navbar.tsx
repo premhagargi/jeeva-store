@@ -17,7 +17,7 @@ export default function Navbar({
   const pathname = usePathname();
 
   const showSearchBar = pathname !== "/search";
-  const hideNavbar = pathname?.startsWith("/product/");
+  const hideNavbar = pathname?.startsWith("/product/") || pathname?.startsWith("/admin");
 
   if (hideNavbar) return null;
 

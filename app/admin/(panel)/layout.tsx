@@ -1,24 +1,14 @@
-import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getAdminSession, logoutAdmin } from "@/lib/admin-auth";
 import { prisma } from "@/lib/prisma";
+import AdminNav from "./AdminNav";
+import Link from "next/link";
 
 async function logout() {
   "use server";
   await logoutAdmin();
   redirect("/admin/login");
 }
-
-const NAV = [
-  { href: "/admin", label: "Dashboard" },
-  { href: "/admin/products", label: "Products" },
-  { href: "/admin/categories", label: "Categories" },
-  { href: "/admin/orders", label: "Orders" },
-  { href: "/admin/customers", label: "Customers" },
-  { href: "/admin/settings", label: "Settings" },
-  { href: "/admin/admins", label: "Admins" },
-  { href: "/admin/audit", label: "Audit" },
-];
 
 export default async function AdminPanelLayout({
   children,
@@ -56,17 +46,7 @@ export default async function AdminPanelLayout({
             ⚠️ {lowStockCount} product{lowStockCount === 1 ? "" : "s"} low on stock — tap to review
           </Link>
         )}
-        <nav className="px-4 pb-2 pt-1 flex gap-2 overflow-x-auto no-scrollbar">
-          {NAV.map((n) => (
-            <Link
-              key={n.href}
-              href={n.href}
-              className="shrink-0 px-3 py-1.5 rounded-full text-[13px] font-semibold bg-gray-100 text-gray-600 hover:bg-emerald-50 hover:text-emerald-700"
-            >
-              {n.label}
-            </Link>
-          ))}
-        </nav>
+        <AdminNav />
       </header>
       <main className="pb-12">{children}</main>
     </div>

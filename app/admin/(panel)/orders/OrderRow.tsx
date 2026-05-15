@@ -42,6 +42,13 @@ const STATUS_STYLE: Record<OrderStatus, { bg: string; text: string; label: strin
   CANCELLED: { bg: "bg-red-50", text: "text-red-600", label: "Cancelled" },
 };
 
+const STATUS_OPTIONS: Array<{ value: OrderStatus; label: string }> = [
+  { value: "PROCESSING", label: "Processing" },
+  { value: "OUT_FOR_DELIVERY", label: "Out for delivery" },
+  { value: "DELIVERED", label: "Delivered" },
+  { value: "CANCELLED", label: "Cancelled" },
+];
+
 export default function OrderRow({ order }: { order: AdminOrder }) {
   const [status, setStatus] = useState<OrderStatus>(order.status);
   const [pending, startTransition] = useTransition();
@@ -137,6 +144,28 @@ export default function OrderRow({ order }: { order: AdminOrder }) {
       )}
 
       <div className="border-t border-gray-100 p-3 flex flex-col gap-2">
+        <label className="flex items-center justify-between gap-2 bg-gray-50 border border-gray-100 rounded-xl px-3 py-2">
+          <span className="text-[11px] font-semibold uppercase tracking-wide text-gray-500">
+            Status
+          </span>
+          <select
+            value={status}
+            disabled={pending}
+            onChange={(e) => {
+              const next = e.target.value as OrderStatus;
+              const requireConfirm = next === "CANCELLED";
+              changeStatus(next, requireConfirm);
+            }}
+            className="bg-white border border-gray-200 rounded-lg px-2 py-1.5 text-[13px] font-semibold text-gray-800 outline-none focus:ring-2 focus:ring-emerald-200 disabled:opacity-60"
+          >
+            {STATUS_OPTIONS.map((opt) => (
+              <option key={opt.value} value={opt.value}>
+                {opt.label}
+              </option>
+            ))}
+          </select>
+        </label>
+
         {status === "PROCESSING" && (
           <>
             <button
