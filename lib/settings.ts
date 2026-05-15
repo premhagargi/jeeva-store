@@ -1,4 +1,7 @@
+import { unstable_cache } from "next/cache";
 import { prisma } from "./prisma";
+
+export const SETTINGS_CACHE_TAG = "storefront-settings";
 
 export const SETTINGS = {
   MIN_ORDER_VALUE: "min_order_value",
@@ -69,7 +72,13 @@ export interface StorefrontSettings {
   contactEmail: string | null;
 }
 
-export async function getStorefrontSettings(): Promise<StorefrontSettings> {
+export const getStorefrontSettings = unstable_cache(
+  loadStorefrontSettings,
+  ["storefront-settings"],
+  { tags: [SETTINGS_CACHE_TAG] },
+);
+
+async function loadStorefrontSettings(): Promise<StorefrontSettings> {
   const map = await getSettings([
     SETTINGS.MIN_ORDER_VALUE,
     SETTINGS.DELIVERY_FEE,

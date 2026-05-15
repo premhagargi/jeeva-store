@@ -1,8 +1,8 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 import { requireAdmin } from "@/lib/admin-auth";
-import { setSetting, SETTINGS } from "@/lib/settings";
+import { setSetting, SETTINGS, SETTINGS_CACHE_TAG } from "@/lib/settings";
 import { logAudit } from "@/lib/audit";
 
 function nonNegativeNumber(raw: string, label: string): number {
@@ -45,6 +45,7 @@ export async function saveStoreSettings(formData: FormData) {
 
   await logAudit(me.id, "update", "settings", null);
 
+  revalidateTag(SETTINGS_CACHE_TAG, "max");
   revalidatePath("/admin/settings");
   revalidatePath("/", "layout");
   revalidatePath("/cart");

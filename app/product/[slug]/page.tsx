@@ -1,103 +1,38 @@
-"use client";
-
 import Image from "next/image";
 import { notFound } from "next/navigation";
-import { ChevronLeft, Loader2 } from "lucide-react";
-import { useState, use, useEffect } from "react";
+import { prisma } from "@/lib/prisma";
 import { styleFor } from "@/lib/category-style";
 import { optimizeCld } from "@/lib/cloudinary-optimize";
 import AddToCartButton from "@/app/components/products/AddToCartButton";
+import BackButton from "./BackButton";
 
-export default function ProductPage({
+export const revalidate = 60;
+
+export default async function ProductPage({
   params,
 }: {
   params: Promise<{ slug: string }>;
 }) {
-  const [loading, setLoading] = useState(true);
-  const [product, setProduct] = useState<any>(null);
+  const { slug } = await params;
 
-  const { slug } = use(params);
+  const product = await prisma.product.findUnique({
+    where: { slug },
+    include: { inventory: true, category: true },
+  });
 
-  useEffect(() => {
-    let cancelled = false;
-    async function load() {
-      try {
-        const res = await fetch(`/api/products/${encodeURIComponent(slug)}`);
-        if (cancelled) return;
-        if (!res.ok) {
-          setProduct(null);
-        } else {
-          const data = await res.json();
-          if (!cancelled) setProduct(data.product ?? null);
-        }
-      } catch {
-        if (!cancelled) setProduct(null);
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
-    }
-    load();
-    return () => {
-      cancelled = true;
-    };
-  }, [slug]);
-
-  if (!loading && !product) {
-    notFound();
-  }
-
-  if (loading || !product) {
-    return (
-      <div className="min-h-screen bg-gray-50 pb-32">
-        <div className="sticky top-0 z-30 bg-white border-b border-gray-100 px-4 py-3 flex items-center gap-2">
-          <div className="w-9 h-9 rounded-xl bg-gray-100" />
-          <div className="flex-1 min-w-0">
-            <div className="h-3 bg-gray-100 rounded w-24 mb-1" />
-            <div className="h-3 bg-gray-100 rounded w-16" />
-          </div>
-        </div>
-
-        <div className="bg-white px-6 py-8 flex items-center justify-center">
-          <div className="w-full aspect-square max-w-xs rounded-3xl bg-gray-100" />
-        </div>
-
-        <div className="bg-white mt-2 px-4 py-5 border-t border-gray-100 space-y-3">
-          <div className="h-3 bg-gray-100 rounded w-24" />
-          <div className="h-5 bg-gray-100 rounded w-3/4" />
-          <div className="h-3 bg-gray-100 rounded w-1/4" />
-          <div className="h-6 bg-gray-100 rounded w-1/3 mt-4" />
-        </div>
-
-        <div className="bg-white mt-2 px-4 py-5 border-t border-gray-100">
-          <div className="h-4 bg-gray-100 rounded w-36 mb-3" />
-          <div className="grid grid-cols-3 gap-3">
-            {[...Array(3)].map((_, i) => (
-              <div key={i} className="text-center">
-                <div className="text-2xl mb-1 w-full h-7 bg-gray-100 rounded" />
-                <div className="h-3 bg-gray-100 rounded w-20 mx-auto" />
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-    );
-  }
+  if (!product || !product.inventory) notFound();
 
   const style = styleFor(product.category.name);
-  const isAvailable = product.inventory?.isAvailable && product.inventory?.stockQty > 0;
-  const qtyLabel = product.inventory?.quantityValue != null
-    ? `${product.inventory.quantityValue} ${product.inventory.unit}`
-    : product.inventory?.unit;
+  const isAvailable = product.inventory.isAvailable && product.inventory.stockQty > 0;
+  const qtyLabel =
+    product.inventory.quantityValue != null
+      ? `${product.inventory.quantityValue} ${product.inventory.unit}`
+      : product.inventory.unit;
 
   return (
     <div className="min-h-screen bg-gray-50 pb-32">
       <div className="sticky top-0 z-30 bg-white border-b border-gray-100 px-4 py-3 flex items-center gap-2">
-        <button
-          onClick={() => history.back()}
-          className="w-9 h-9 rounded-xl flex items-center justify-center active:bg-gray-100"
-        >
-          <ChevronLeft size={20} className="text-gray-700" />
-        </button>
+        <BackButton />
         <h1 className="text-[15px] font-bold text-gray-900 truncate">{product.category.name}</h1>
       </div>
 
@@ -130,7 +65,7 @@ export default function ProductPage({
         <p className="text-[13px] text-gray-500 mt-1">{qtyLabel}</p>
 
         <div className="flex items-baseline gap-2 mt-4">
-          <span className="text-[24px] font-bold text-gray-900">₹{product.inventory?.price ?? 0}</span>
+          <span className="text-[24px] font-bold text-gray-900">₹{product.inventory.price ?? 0}</span>
           {!isAvailable && (
             <span className="text-[12px] font-semibold text-red-500">Out of stock</span>
           )}
@@ -160,9 +95,9 @@ export default function ProductPage({
           productId={product.id}
           slug={product.slug}
           name={product.name}
-          unit={product.inventory?.unit}
-          quantityValue={product.inventory?.quantityValue}
-          price={product.inventory?.price ?? 0}
+          unit={product.inventory.unit}
+          quantityValue={product.inventory.quantityValue}
+          price={product.inventory.price ?? 0}
           emoji={style.emoji}
           bg={style.bg}
           imageUrl={product.imageUrl}
