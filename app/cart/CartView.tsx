@@ -7,9 +7,19 @@ import CartItemRow from "../components/cart/CartItemRow";
 import CartSkeleton from "../components/cart/CartSkeleton";
 import { useCart, increment, decrement } from "@/lib/cart";
 
-const DELIVERY_FEE = 0;
+interface CartViewProps {
+  minOrderValue: number;
+  deliveryFee: number;
+  freeDeliveryThreshold: number;
+  storeOpen: boolean;
+}
 
-export default function CartView({ minOrderValue }: { minOrderValue: number }) {
+export default function CartView({
+  minOrderValue,
+  deliveryFee,
+  freeDeliveryThreshold,
+  storeOpen,
+}: CartViewProps) {
   const items = useCart();
   const [hydrated, setHydrated] = useState(false);
 
@@ -22,9 +32,16 @@ export default function CartView({ minOrderValue }: { minOrderValue: number }) {
   }
 
   const itemTotal = items.reduce((s, i) => s + i.price * i.qty, 0);
-  const grandTotal = itemTotal + DELIVERY_FEE;
+  const qualifiesForFree =
+    freeDeliveryThreshold > 0 && itemTotal >= freeDeliveryThreshold;
+  const effectiveDelivery = qualifiesForFree ? 0 : deliveryFee;
+  const grandTotal = itemTotal + effectiveDelivery;
   const belowMin = minOrderValue > 0 && itemTotal < minOrderValue;
   const shortfall = belowMin ? minOrderValue - itemTotal : 0;
+  const freeShortfall =
+    freeDeliveryThreshold > 0 && !qualifiesForFree && deliveryFee > 0
+      ? freeDeliveryThreshold - itemTotal
+      : 0;
 
   if (items.length === 0) {
     return (
@@ -68,6 +85,18 @@ export default function CartView({ minOrderValue }: { minOrderValue: number }) {
           </div>
         </div>
 
+        {!storeOpen && (
+          <div className="bg-red-50 border border-red-200 rounded-2xl px-4 py-3 flex items-start gap-2.5">
+            <AlertCircle size={16} className="text-red-600 mt-0.5 shrink-0" />
+            <div>
+              <p className="text-[13px] font-bold text-red-800">Store is currently closed</p>
+              <p className="text-[11px] text-red-700 mt-0.5">
+                You can browse, but checkout is disabled.
+              </p>
+            </div>
+          </div>
+        )}
+
         {belowMin && (
           <div className="bg-amber-50 border border-amber-200 rounded-2xl px-4 py-3 flex items-start gap-2.5">
             <AlertCircle size={16} className="text-amber-600 mt-0.5 shrink-0" />
@@ -79,6 +108,14 @@ export default function CartView({ minOrderValue }: { minOrderValue: number }) {
                 Minimum order value is ₹{minOrderValue}.
               </p>
             </div>
+          </div>
+        )}
+
+        {freeShortfall > 0 && (
+          <div className="bg-blue-50 border border-blue-100 rounded-2xl px-4 py-2.5">
+            <p className="text-[12px] text-blue-800 font-semibold">
+              Add ₹{freeShortfall} more for FREE delivery
+            </p>
           </div>
         )}
 
@@ -114,8 +151,8 @@ export default function CartView({ minOrderValue }: { minOrderValue: number }) {
             </div>
             <div className="flex justify-between text-[13px] text-gray-500">
               <span>Delivery fee</span>
-              <span className={DELIVERY_FEE === 0 ? "text-emerald-600 font-medium" : ""}>
-                {DELIVERY_FEE === 0 ? "FREE" : `₹${DELIVERY_FEE}`}
+              <span className={effectiveDelivery === 0 ? "text-emerald-600 font-medium" : ""}>
+                {effectiveDelivery === 0 ? "FREE" : `₹${effectiveDelivery}`}
               </span>
             </div>
             <div className="border-t border-dashed border-gray-100 my-1" />
@@ -128,7 +165,14 @@ export default function CartView({ minOrderValue }: { minOrderValue: number }) {
       </div>
 
       <div className="fixed bottom-20 left-0 right-0 max-w-md mx-auto px-4 z-50">
-        {belowMin ? (
+        {!storeOpen ? (
+          <button
+            disabled
+            className="w-full bg-gray-200 text-gray-500 rounded-2xl py-4 flex items-center justify-center px-5 cursor-not-allowed"
+          >
+            <span className="text-[14px] font-bold">Store is closed</span>
+          </button>
+        ) : belowMin ? (
           <button
             disabled
             className="w-full bg-gray-200 text-gray-500 rounded-2xl py-4 flex items-center justify-center px-5 cursor-not-allowed"

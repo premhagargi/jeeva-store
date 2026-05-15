@@ -1,34 +1,75 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
-import { createHash } from "crypto";
+import { createHash, randomBytes } from "crypto";
+import { prisma } from "./prisma";
 
 const COOKIE_NAME = "jeeva_admin";
 
-function hash(value: string): string {
-  return createHash("sha256").update(value).digest("hex");
+export interface AdminSession {
+  id: string;
+  username: string;
+  displayName: string | null;
 }
 
-function expectedToken(): string {
-  const pw = process.env.ADMIN_PASSWORD;
-  if (!pw) throw new Error("ADMIN_PASSWORD env var not set");
-  return hash(pw);
+function hashPassword(password: string, salt: string): string {
+  return createHash("sha256").update(`${salt}:${password}`).digest("hex");
+}
+
+export function makePasswordHash(password: string): string {
+  const salt = randomBytes(8).toString("hex");
+  return `${salt}$${hashPassword(password, salt)}`;
+}
+
+function verifyPassword(password: string, stored: string): boolean {
+  const idx = stored.indexOf("$");
+  if (idx <= 0) return false;
+  const salt = stored.slice(0, idx);
+  const expected = stored.slice(idx + 1);
+  return hashPassword(password, salt) === expected;
+}
+
+function signToken(adminId: string): string {
+  const secret = process.env.ADMIN_PASSWORD ?? "dev-secret";
+  return createHash("sha256").update(`${adminId}:${secret}`).digest("hex");
+}
+
+export async function getAdminSession(): Promise<AdminSession | null> {
+  const jar = await cookies();
+  const raw = jar.get(COOKIE_NAME)?.value;
+  if (!raw) return null;
+  const [adminId, token] = raw.split(".");
+  if (!adminId || !token) return null;
+  if (token !== signToken(adminId)) return null;
+  const admin = await prisma.admin.findUnique({
+    where: { id: adminId },
+    select: { id: true, username: true, displayName: true, isActive: true },
+  });
+  if (!admin || !admin.isActive) return null;
+  return { id: admin.id, username: admin.username, displayName: admin.displayName };
 }
 
 export async function isAdmin(): Promise<boolean> {
-  const jar = await cookies();
-  const token = jar.get(COOKIE_NAME)?.value;
-  if (!token) return false;
-  return token === expectedToken();
+  return (await getAdminSession()) !== null;
 }
 
-export async function requireAdmin() {
-  if (!(await isAdmin())) redirect("/admin/login");
+export async function requireAdmin(): Promise<AdminSession> {
+  const s = await getAdminSession();
+  if (!s) redirect("/admin/login");
+  return s;
 }
 
-export async function loginAdmin(password: string): Promise<boolean> {
-  if (password !== process.env.ADMIN_PASSWORD) return false;
+export async function loginAdmin(
+  username: string,
+  password: string,
+): Promise<boolean> {
+  const admin = await prisma.admin.findUnique({
+    where: { username: username.trim().toLowerCase() },
+  });
+  if (!admin || !admin.isActive) return false;
+  if (!verifyPassword(password, admin.passwordHash)) return false;
+
   const jar = await cookies();
-  jar.set(COOKIE_NAME, hash(password), {
+  jar.set(COOKIE_NAME, `${admin.id}.${signToken(admin.id)}`, {
     httpOnly: true,
     sameSite: "lax",
     secure: process.env.NODE_ENV === "production",

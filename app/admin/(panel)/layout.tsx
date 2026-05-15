@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { isAdmin, logoutAdmin } from "@/lib/admin-auth";
+import { getAdminSession, logoutAdmin } from "@/lib/admin-auth";
+import { prisma } from "@/lib/prisma";
 
 async function logout() {
   "use server";
@@ -8,12 +9,28 @@ async function logout() {
   redirect("/admin/login");
 }
 
+const NAV = [
+  { href: "/admin", label: "Dashboard" },
+  { href: "/admin/products", label: "Products" },
+  { href: "/admin/categories", label: "Categories" },
+  { href: "/admin/orders", label: "Orders" },
+  { href: "/admin/customers", label: "Customers" },
+  { href: "/admin/settings", label: "Settings" },
+  { href: "/admin/admins", label: "Admins" },
+  { href: "/admin/audit", label: "Audit" },
+];
+
 export default async function AdminPanelLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  if (!(await isAdmin())) redirect("/admin/login");
+  const session = await getAdminSession();
+  if (!session) redirect("/admin/login");
+
+  const lowStockCount = await prisma.inventory.count({
+    where: { stockQty: { lte: 5 } },
+  });
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -22,35 +39,33 @@ export default async function AdminPanelLayout({
           <Link href="/admin" className="text-[16px] font-bold text-gray-900">
             Jeeva Admin
           </Link>
-          <form action={logout}>
-            <button className="text-[12px] font-semibold text-gray-400">Logout</button>
-          </form>
+          <div className="flex items-center gap-3">
+            <span className="text-[11px] font-semibold text-gray-500">
+              {session.displayName ?? session.username}
+            </span>
+            <form action={logout}>
+              <button className="text-[12px] font-semibold text-gray-400">Logout</button>
+            </form>
+          </div>
         </div>
-        <nav className="px-4 pb-2 flex gap-2 overflow-x-auto no-scrollbar">
+        {lowStockCount > 0 && (
           <Link
-            href="/admin"
-            className="shrink-0 px-3 py-1.5 rounded-full text-[13px] font-semibold bg-gray-100 text-gray-600 hover:bg-emerald-50 hover:text-emerald-700"
+            href="/admin/products?lowStock=1"
+            className="block bg-red-50 border-t border-red-100 px-4 py-1.5 text-[11px] font-bold text-red-600"
           >
-            Dashboard
+            ⚠️ {lowStockCount} product{lowStockCount === 1 ? "" : "s"} low on stock — tap to review
           </Link>
-          <Link
-            href="/admin/products"
-            className="shrink-0 px-3 py-1.5 rounded-full text-[13px] font-semibold bg-gray-100 text-gray-600 hover:bg-emerald-50 hover:text-emerald-700"
-          >
-            Products
-          </Link>
-          <Link
-            href="/admin/orders"
-            className="shrink-0 px-3 py-1.5 rounded-full text-[13px] font-semibold bg-gray-100 text-gray-600 hover:bg-emerald-50 hover:text-emerald-700"
-          >
-            Orders
-          </Link>
-          <Link
-            href="/admin/settings"
-            className="shrink-0 px-3 py-1.5 rounded-full text-[13px] font-semibold bg-gray-100 text-gray-600 hover:bg-emerald-50 hover:text-emerald-700"
-          >
-            Settings
-          </Link>
+        )}
+        <nav className="px-4 pb-2 pt-1 flex gap-2 overflow-x-auto no-scrollbar">
+          {NAV.map((n) => (
+            <Link
+              key={n.href}
+              href={n.href}
+              className="shrink-0 px-3 py-1.5 rounded-full text-[13px] font-semibold bg-gray-100 text-gray-600 hover:bg-emerald-50 hover:text-emerald-700"
+            >
+              {n.label}
+            </Link>
+          ))}
         </nav>
       </header>
       <main className="pb-12">{children}</main>

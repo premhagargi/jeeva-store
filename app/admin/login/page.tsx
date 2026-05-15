@@ -15,20 +15,29 @@ export default async function AdminLoginPage({
         </div>
         <h1 className="text-[18px] font-bold text-gray-900 text-center">Admin login</h1>
         <p className="text-[12px] text-gray-400 text-center mt-1 mb-5">
-          Enter the admin password to continue
+          Sign in to manage the store
         </p>
 
         <form action={login} className="flex flex-col gap-3">
           <input
+            type="text"
+            name="username"
+            placeholder="Username"
+            autoFocus
+            autoComplete="username"
+            required
+            className="bg-gray-50 border border-gray-100 rounded-xl px-3 py-2.5 text-[14px] outline-none focus:ring-2 focus:ring-emerald-200"
+          />
+          <input
             type="password"
             name="password"
             placeholder="Password"
-            autoFocus
+            autoComplete="current-password"
             required
             className="bg-gray-50 border border-gray-100 rounded-xl px-3 py-2.5 text-[14px] outline-none focus:ring-2 focus:ring-emerald-200"
           />
           {sp.error && (
-            <p className="text-[12px] text-red-500 font-medium">Wrong password</p>
+            <p className="text-[12px] text-red-500 font-medium">Wrong username or password</p>
           )}
           <button
             type="submit"

@@ -5,6 +5,8 @@ import { prisma } from "@/lib/prisma";
 import { styleFor } from "@/lib/category-style";
 import ProductCard from "@/app/components/products/ProductCard";
 
+export const revalidate = 60;
+
 export default async function CategoryPage({
   params,
 }: {

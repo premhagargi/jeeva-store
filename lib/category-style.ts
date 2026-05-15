@@ -31,6 +31,37 @@ export function styleFor(text: string): Style {
   return FALLBACK;
 }
 
+export function styleForCategory(category: {
+  name: string;
+  emoji?: string | null;
+  bgColor?: string | null;
+}): Style {
+  const base = styleFor(category.name);
+  return {
+    emoji: category.emoji?.trim() || base.emoji,
+    bg: category.bgColor?.trim() || base.bg,
+  };
+}
+
+export const CATEGORY_BG_PALETTE: string[] = [
+  "bg-emerald-100",
+  "bg-amber-100",
+  "bg-blue-100",
+  "bg-pink-100",
+  "bg-rose-100",
+  "bg-orange-100",
+  "bg-indigo-100",
+  "bg-fuchsia-100",
+  "bg-red-100",
+  "bg-yellow-100",
+  "bg-green-100",
+  "bg-teal-100",
+  "bg-cyan-100",
+  "bg-lime-100",
+  "bg-stone-100",
+  "bg-gray-100",
+];
+
 export function formatQuantity(value: number | null | undefined, unit: string): string {
   if (value == null) return unit;
   const v = Number.isInteger(value) ? value.toString() : value.toString();

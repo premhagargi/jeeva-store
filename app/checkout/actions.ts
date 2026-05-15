@@ -2,12 +2,13 @@
 
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
-import { getMinOrderValue } from "@/lib/settings";
+import { getStorefrontSettings } from "@/lib/settings";
 
 interface PlaceOrderInput {
   phone: string;
   name: string;
   address: string;
+  notes?: string;
   items: Array<{ productId: string; price: number; qty: number }>;
 }
 
@@ -15,10 +16,16 @@ export async function placeOrder(input: PlaceOrderInput) {
   const phone = input.phone.trim();
   const name = input.name.trim();
   const address = input.address.trim();
+  const notes = input.notes?.trim() || null;
 
   if (!phone || phone.length < 7) throw new Error("Valid phone required");
   if (!address) throw new Error("Address required");
   if (input.items.length === 0) throw new Error("Cart is empty");
+
+  const settings = await getStorefrontSettings();
+  if (!settings.storeOpen) {
+    throw new Error("Store is currently closed. Please try again later.");
+  }
 
   const productIds = input.items.map((i) => i.productId);
   const products = await prisma.product.findMany({
@@ -37,10 +44,15 @@ export async function placeOrder(input: PlaceOrderInput) {
     return s + (p.inventory!.price ?? 0) * i.qty;
   }, 0);
 
-  const minOrderValue = await getMinOrderValue();
-  if (minOrderValue > 0 && itemTotal < minOrderValue) {
-    throw new Error(`Minimum order value is ₹${minOrderValue}`);
+  if (settings.minOrderValue > 0 && itemTotal < settings.minOrderValue) {
+    throw new Error(`Minimum order value is ₹${settings.minOrderValue}`);
   }
+
+  const deliveryFee =
+    settings.freeDeliveryThreshold > 0 && itemTotal >= settings.freeDeliveryThreshold
+      ? 0
+      : settings.deliveryFee;
+  const total = itemTotal + deliveryFee;
 
   const customer = await prisma.customer.upsert({
     where: { phone },
@@ -64,15 +76,16 @@ export async function placeOrder(input: PlaceOrderInput) {
       }
     }
 
-    return tx.order.create({
+    const created = await tx.order.create({
       data: {
         customerId: customer.id,
         phone,
         address,
+        customerNotes: notes,
         itemTotal,
-        deliveryFee: 0,
+        deliveryFee,
         discount: 0,
-        total: itemTotal,
+        total,
         items: {
           create: input.items.map((i) => {
             const p = byId.get(i.productId)!;
@@ -87,8 +100,13 @@ export async function placeOrder(input: PlaceOrderInput) {
             };
           }),
         },
+        statusEvents: {
+          create: { status: "PROCESSING", note: "Order placed" },
+        },
       },
     });
+
+    return created;
   });
 
   redirect(`/orders/${order.id}?placed=1`);

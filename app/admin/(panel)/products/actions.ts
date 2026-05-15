@@ -6,6 +6,7 @@ import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/admin-auth";
 import { getCloudinaryConfig, signParams, deleteFromCloudinary } from "@/lib/cloudinary";
 import { slugifyName } from "@/scripts/utils";
+import { logAudit } from "@/lib/audit";
 import type { ProductInput } from "./types";
 
 function validateInput(input: ProductInput): string | null {
@@ -39,7 +40,7 @@ export async function updateInventory(
   productId: string,
   data: { price?: number; stockQty?: number; isAvailable?: boolean },
 ) {
-  await requireAdmin();
+  const me = await requireAdmin();
 
   const patch: { price?: number; stockQty?: number; isAvailable?: boolean } = {};
   if (data.price !== undefined && Number.isFinite(data.price) && data.price >= 0) {
@@ -62,6 +63,8 @@ export async function updateInventory(
     where: { productId },
     data: patch,
   });
+
+  await logAudit(me.id, "inventory_update", "product", productId, JSON.stringify(patch));
 
   revalidatePath("/admin/products");
   revalidatePath(`/category`);
@@ -138,7 +141,7 @@ export async function removeProductImage(productId: string) {
 }
 
 export async function createProduct(input: ProductInput) {
-  await requireAdmin();
+  const me = await requireAdmin();
   const err = validateInput(input);
   if (err) throw new Error(err);
 
@@ -167,6 +170,8 @@ export async function createProduct(input: ProductInput) {
     },
   });
 
+  await logAudit(me.id, "create", "product", product.id, `name=${input.name}`);
+
   revalidatePath("/admin/products");
   revalidatePath("/");
   revalidatePath(`/category/${category.slug}`);
@@ -175,7 +180,7 @@ export async function createProduct(input: ProductInput) {
 }
 
 export async function updateProduct(productId: string, input: ProductInput) {
-  await requireAdmin();
+  const me = await requireAdmin();
   const err = validateInput(input);
   if (err) throw new Error(err);
 
@@ -210,6 +215,8 @@ export async function updateProduct(productId: string, input: ProductInput) {
     }),
   ]);
 
+  await logAudit(me.id, "update", "product", productId, `name=${input.name}`);
+
   revalidatePath("/admin/products");
   revalidatePath("/");
   revalidatePath(`/category/${category.slug}`);
@@ -219,7 +226,7 @@ export async function updateProduct(productId: string, input: ProductInput) {
 }
 
 export async function deleteProduct(productId: string) {
-  await requireAdmin();
+  const me = await requireAdmin();
 
   const product = await prisma.product.findUnique({
     where: { id: productId },
@@ -243,6 +250,8 @@ export async function deleteProduct(productId: string) {
     prisma.inventory.deleteMany({ where: { productId } }),
     prisma.product.delete({ where: { id: productId } }),
   ]);
+
+  await logAudit(me.id, "delete", "product", productId, `name=${product.name}`);
 
   revalidatePath("/admin/products");
   revalidatePath("/");

@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Search, Plus } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import ProductRow, { AdminProduct } from "./ProductRow";
+import ImportExportBar from "./ImportExportBar";
 
 const PAGE_SIZE = 50;
 
@@ -78,6 +79,8 @@ export default async function AdminProducts({
         <Plus size={16} />
         New product
       </Link>
+
+      <ImportExportBar />
 
       <form action="/admin/products" method="get" className="flex flex-col gap-2">
         <div className="flex items-center gap-2 bg-white border border-gray-100 rounded-xl px-3 py-2.5 shadow-sm">

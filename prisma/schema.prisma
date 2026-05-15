@@ -16,6 +16,9 @@ model Category {
   id        String    @id @default(uuid())
   name      String
   slug      String   @unique
+  emoji     String?
+  bgColor   String?
+  sortOrder Int      @default(0)
   products  Product[]
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -31,18 +34,57 @@ model Product {
   category    Category   @relation(fields: [categoryId], references: [id])
   inventory   Inventory?
   orderItems  OrderItem[]
+  images      ProductImage[]
   createdAt   DateTime   @default(now())
   updatedAt   DateTime   @updatedAt
+}
+
+model ProductImage {
+  id            String   @id @default(uuid())
+  productId     String
+  product       Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  url           String
+  publicId      String?
+  altText       String?
+  sortOrder     Int      @default(0)
+  createdAt     DateTime @default(now())
+
+  @@index([productId])
 }
 
 model Customer {
   id        String   @id @default(uuid())
   phone     String   @unique
   name      String?
+  email     String?
   address   String?
+  notes     String?
+  flagged   Boolean  @default(false)
   orders    Order[]
+  addresses Address[]
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+model Address {
+  id         String   @id @default(uuid())
+  customerId String
+  customer   Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  phone      String
+  label      String?
+  fullName   String?
+  line1      String
+  line2      String?
+  landmark   String?
+  city       String?
+  state      String?
+  pincode    String?
+  isDefault  Boolean  @default(false)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([customerId])
+  @@index([phone])
 }
 
 enum OrderStatus {
@@ -53,22 +95,64 @@ enum OrderStatus {
 }
 
 model Order {
-  id          String      @id @default(uuid())
-  customerId  String
-  customer    Customer    @relation(fields: [customerId], references: [id])
-  status      OrderStatus @default(PROCESSING)
-  itemTotal   Float
-  deliveryFee Float       @default(0)
-  discount    Float       @default(0)
-  total       Float
-  phone       String
-  address     String
-  items       OrderItem[]
-  createdAt   DateTime    @default(now())
-  updatedAt   DateTime    @updatedAt
+  id            String      @id @default(uuid())
+  customerId    String
+  customer      Customer    @relation(fields: [customerId], references: [id])
+  status        OrderStatus @default(PROCESSING)
+  itemTotal     Float
+  deliveryFee   Float       @default(0)
+  discount      Float       @default(0)
+  total         Float
+  phone         String
+  address       String
+  customerNotes String?
+  adminNotes    String?
+  items         OrderItem[]
+  statusEvents  OrderStatusEvent[]
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
 
   @@index([customerId])
   @@index([phone])
+}
+
+model OrderStatusEvent {
+  id        String      @id @default(uuid())
+  orderId   String
+  order     Order       @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  status    OrderStatus
+  adminId   String?
+  admin     Admin?      @relation(fields: [adminId], references: [id])
+  note      String?
+  createdAt DateTime    @default(now())
+
+  @@index([orderId])
+}
+
+model Admin {
+  id           String    @id @default(uuid())
+  username     String    @unique
+  passwordHash String
+  displayName  String?
+  isActive     Boolean   @default(true)
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  auditLogs    AuditLog[]
+  statusEvents OrderStatusEvent[]
+}
+
+model AuditLog {
+  id        String   @id @default(uuid())
+  adminId   String?
+  admin     Admin?   @relation(fields: [adminId], references: [id])
+  action    String
+  entity    String
+  entityId  String?
+  details   String?
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
+  @@index([adminId])
 }
 
 model Setting {
@@ -100,6 +184,7 @@ model Inventory {
   quantityValue Float?
   price         Float?
   stockQty      Int      @default(100)
+  lowStockThreshold Int  @default(10)
   isAvailable   Boolean  @default(true)
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt

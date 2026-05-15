@@ -102,14 +102,23 @@ export default function ProductRow({ product }: { product: AdminProduct }) {
           />
         </label>
         <label className="flex flex-col gap-1">
-          <span className="text-[11px] font-semibold text-gray-400">Stock qty</span>
+          <span className="text-[11px] font-semibold text-gray-400 flex items-center gap-1">
+            Stock qty
+            {Number(stock) < 10 && Number(stock) >= 0 && (
+              <span className="text-[9px] font-bold text-red-600 bg-red-50 px-1 rounded">
+                LOW
+              </span>
+            )}
+          </span>
           <input
             type="number"
             min={0}
             step={1}
             value={stock}
             onChange={(e) => setStock(e.target.value)}
-            className="bg-gray-50 border border-gray-100 rounded-lg px-2.5 py-2 text-[13px] outline-none focus:ring-2 focus:ring-emerald-200"
+            className={`bg-gray-50 border rounded-lg px-2.5 py-2 text-[13px] outline-none focus:ring-2 focus:ring-emerald-200 ${
+              Number(stock) < 10 ? "border-red-200" : "border-gray-100"
+            }`}
           />
         </label>
       </div>

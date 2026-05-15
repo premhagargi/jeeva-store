@@ -2,6 +2,8 @@ import { prisma } from "@/lib/prisma";
 import { styleFor } from "@/lib/category-style";
 import CategoryLink from "./CategoryLink";
 
+export const revalidate = 60;
+
 export default async function CategorySections() {
   const categories = await prisma.category.findMany({
     orderBy: { name: "asc" },
