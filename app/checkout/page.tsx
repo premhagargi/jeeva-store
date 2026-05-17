@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState, useTransition } from "react";
-import { ChevronLeft, MapPin, Check, Plus } from "lucide-react";
+import { ChevronLeft, MapPin, Check, Plus, ShoppingBag, Truck } from "lucide-react";
 import { useCart, clearCart } from "@/lib/cart";
 import { getStoredPhone, setStoredPhone } from "@/lib/customer";
 import { placeOrder } from "./actions";
@@ -37,6 +37,7 @@ export default function CheckoutPage() {
   const [savedAddresses, setSavedAddresses] = useState<SavedAddress[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [useManual, setUseManual] = useState(false);
+  const [placingSnapshot, setPlacingSnapshot] = useState<{ total: number; count: number } | null>(null);
 
   useEffect(() => {
     const stored = getStoredPhone();
@@ -92,7 +93,7 @@ export default function CheckoutPage() {
 
   const itemTotal = items.reduce((s, i) => s + i.price * i.qty, 0);
 
-  if (items.length === 0) {
+  if (items.length === 0 && !isPending) {
     return (
       <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center px-8 text-center">
         <p className="text-[14px] text-gray-500 mb-4">Your cart is empty.</p>
@@ -100,6 +101,15 @@ export default function CheckoutPage() {
           Browse products
         </Link>
       </div>
+    );
+  }
+
+  if (items.length === 0 && isPending) {
+    return (
+      <PlacingOrderOverlay
+        total={placingSnapshot?.total ?? 0}
+        itemCount={placingSnapshot?.count ?? 0}
+      />
     );
   }
 
@@ -118,6 +128,7 @@ export default function CheckoutPage() {
     }
 
     setStoredPhone(p);
+    setPlacingSnapshot({ total: itemTotal, count: items.length });
 
     startTransition(async () => {
       try {
@@ -125,6 +136,7 @@ export default function CheckoutPage() {
           phone: p,
           name,
           address,
+          addressId: useManual ? null : selectedId,
           notes,
           items: items.map((i) => ({
             productId: i.productId,
@@ -138,6 +150,7 @@ export default function CheckoutPage() {
           clearCart();
           throw err;
         }
+        setPlacingSnapshot(null);
         setError(err?.message ?? "Failed to place order");
       }
     });
@@ -192,8 +205,14 @@ export default function CheckoutPage() {
 
           {showAddressList ? (
             <div className="flex flex-col gap-2">
-              {savedAddresses.map((a) => {
+              {(() => {
+                const lastUsedId =
+                  savedAddresses.find((a) => !a.isDefault)?.id ??
+                  savedAddresses[0]?.id ??
+                  null;
+                return savedAddresses.map((a) => {
                 const selected = selectedId === a.id;
+                const isLastUsed = a.id === lastUsedId && !a.isDefault;
                 return (
                   <button
                     type="button"
@@ -208,13 +227,18 @@ export default function CheckoutPage() {
                     <div className="flex items-start gap-2">
                       <MapPin size={14} className={selected ? "text-emerald-600 mt-0.5" : "text-gray-400 mt-0.5"} />
                       <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-0.5">
+                        <div className="flex items-center gap-2 mb-0.5 flex-wrap">
                           <span className="text-[13px] font-bold text-gray-900">
                             {a.label || "Address"}
                           </span>
                           {a.isDefault && (
                             <span className="text-[10px] font-bold text-emerald-700 bg-emerald-100 px-1.5 py-0.5 rounded">
                               Default
+                            </span>
+                          )}
+                          {isLastUsed && (
+                            <span className="text-[10px] font-bold text-amber-700 bg-amber-100 px-1.5 py-0.5 rounded">
+                              Last used
                             </span>
                           )}
                         </div>
@@ -227,7 +251,8 @@ export default function CheckoutPage() {
                     </div>
                   </button>
                 );
-              })}
+              });
+              })()}
               <button
                 type="button"
                 onClick={chooseManual}
@@ -305,6 +330,13 @@ export default function CheckoutPage() {
         )}
       </form>
 
+      {isPending && (
+        <PlacingOrderOverlay
+          total={placingSnapshot?.total ?? itemTotal}
+          itemCount={placingSnapshot?.count ?? items.length}
+        />
+      )}
+
       <div className="fixed bottom-20 left-0 right-0 max-w-md mx-auto px-4 z-40">
         <button
           type="submit"
@@ -323,6 +355,89 @@ export default function CheckoutPage() {
           </div>
         </button>
       </div>
+    </div>
+  );
+}
+
+function PlacingOrderOverlay({ total, itemCount }: { total: number; itemCount: number }) {
+  const [step, setStep] = useState(0);
+  const steps = [
+    { icon: ShoppingBag, label: "Confirming your order" },
+    { icon: Check, label: "Reserving stock" },
+    { icon: Truck, label: "Notifying store" },
+  ];
+
+  useEffect(() => {
+    const t1 = setTimeout(() => setStep(1), 700);
+    const t2 = setTimeout(() => setStep(2), 1400);
+    return () => {
+      clearTimeout(t1);
+      clearTimeout(t2);
+    };
+  }, []);
+
+  return (
+    <div className="fixed inset-0 z-[100] bg-white flex flex-col items-center justify-center px-6">
+      <div className="relative w-28 h-28 mb-6">
+        <div className="absolute inset-0 rounded-full bg-emerald-100 animate-ping opacity-60" />
+        <div className="absolute inset-2 rounded-full bg-emerald-200 animate-ping opacity-50" style={{ animationDelay: "200ms" }} />
+        <div className="relative w-full h-full rounded-full bg-emerald-500 flex items-center justify-center shadow-xl shadow-emerald-300/50">
+          <ShoppingBag size={42} className="text-white" />
+        </div>
+      </div>
+
+      <p className="text-[20px] font-bold text-gray-900 mb-1">Placing your order</p>
+      <p className="text-[13px] text-gray-500 mb-8 text-center">
+        Hang tight — we&apos;re sending {itemCount} item{itemCount > 1 ? "s" : ""} worth ₹{total} to the store
+      </p>
+
+      <div className="w-full max-w-xs flex flex-col gap-3">
+        {steps.map((s, i) => {
+          const Icon = s.icon;
+          const done = i < step;
+          const active = i === step;
+          return (
+            <div
+              key={s.label}
+              className={`flex items-center gap-3 px-4 py-3 rounded-2xl border transition-all ${
+                done
+                  ? "bg-emerald-50 border-emerald-100"
+                  : active
+                  ? "bg-white border-emerald-200 shadow-sm"
+                  : "bg-gray-50 border-gray-100"
+              }`}
+            >
+              <div
+                className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${
+                  done
+                    ? "bg-emerald-500 text-white"
+                    : active
+                    ? "bg-emerald-100 text-emerald-600"
+                    : "bg-gray-200 text-gray-400"
+                }`}
+              >
+                {done ? <Check size={16} /> : <Icon size={14} />}
+              </div>
+              <span
+                className={`text-[13px] font-semibold ${
+                  done ? "text-emerald-700" : active ? "text-gray-900" : "text-gray-400"
+                }`}
+              >
+                {s.label}
+              </span>
+              {active && (
+                <span className="ml-auto flex gap-0.5">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-bounce" />
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-bounce" style={{ animationDelay: "150ms" }} />
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-bounce" style={{ animationDelay: "300ms" }} />
+                </span>
+              )}
+            </div>
+          );
+        })}
+      </div>
+
+      <p className="text-[11px] text-gray-400 mt-8">Please don&apos;t close this screen</p>
     </div>
   );
 }

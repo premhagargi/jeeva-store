@@ -77,10 +77,9 @@ export default function CartView({
         <div className="bg-white rounded-2xl px-4 py-3 flex items-center gap-3 shadow-sm border border-gray-100">
           <span className="text-xl">⚡</span>
           <div>
-            <p className="text-[13px] font-bold text-gray-800">Delivery in 8 minutes</p>
             <p className="text-[11px] text-gray-400 mt-0.5 flex items-center gap-1">
               <MapPin size={10} />
-              Bhagya Nagar, 3rd Cross, Gokak
+              Bhagya Nagar, 5th Cross, Belagavi
             </p>
           </div>
         </div>

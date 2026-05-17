@@ -134,7 +134,7 @@ function OrderDetailContent({
           <div>
             <p className="text-[14px] font-bold text-emerald-800">Order placed!</p>
             <p className="text-[12px] text-emerald-700 mt-0.5">
-              We&apos;ll deliver it to you in 8 minutes.
+              We&apos;ll deliver it to you in under 30 minutes.
             </p>
           </div>
         </div>

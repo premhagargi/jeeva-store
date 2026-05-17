@@ -50,23 +50,35 @@ const STATUS_MAP: Record<string, OrderStatus> = {
   CANCELLED: "cancelled",
 };
 
+const IST_TZ = "Asia/Kolkata";
+
+function istDateKey(d: Date): string {
+  return d.toLocaleDateString("en-CA", { timeZone: IST_TZ });
+}
+
 function formatDate(d: Date): { date: string; time: string } {
   const now = new Date();
-  const sameDay = d.toDateString() === now.toDateString();
+  const todayKey = istDateKey(now);
   const yesterday = new Date(now);
   yesterday.setDate(yesterday.getDate() - 1);
-  const isYesterday = d.toDateString() === yesterday.toDateString();
+  const yesterdayKey = istDateKey(yesterday);
+  const dKey = istDateKey(d);
 
   const time = d.toLocaleTimeString("en-IN", {
     hour: "numeric",
     minute: "2-digit",
     hour12: true,
+    timeZone: IST_TZ,
   });
 
-  if (sameDay) return { date: "Today", time };
-  if (isYesterday) return { date: "Yesterday", time };
+  if (dKey === todayKey) return { date: "Today", time };
+  if (dKey === yesterdayKey) return { date: "Yesterday", time };
   return {
-    date: d.toLocaleDateString("en-IN", { day: "numeric", month: "short" }),
+    date: d.toLocaleDateString("en-IN", {
+      day: "numeric",
+      month: "short",
+      timeZone: IST_TZ,
+    }),
     time,
   };
 }

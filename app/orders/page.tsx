@@ -105,7 +105,7 @@ function OrdersContent() {
 
       {placed && (
         <div className="mx-4 mt-4 bg-emerald-50 border border-emerald-100 rounded-xl px-3 py-2.5 text-[13px] font-semibold text-emerald-700">
-          ✅ Order placed! We'll deliver in 8 minutes.
+          ✅ Order placed!
         </div>
       )}
 

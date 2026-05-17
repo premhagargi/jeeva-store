@@ -24,7 +24,7 @@ export default function Footer() {
           <span className="flex items-center gap-1">✅ Best prices</span>
         </div>
         <p className="text-[10px] text-gray-300 mt-4">
-          © {new Date().getFullYear()} Jeeva Mart. Made with ♥ in Gokak.
+          © {new Date().getFullYear()} Jeeva Mart. Made with ♥ in Belagavi.
         </p>
       </div>
     </footer>

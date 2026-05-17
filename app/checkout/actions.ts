@@ -8,6 +8,7 @@ interface PlaceOrderInput {
   phone: string;
   name: string;
   address: string;
+  addressId?: string | null;
   notes?: string;
   items: Array<{ productId: string; price: number; qty: number }>;
 }
@@ -61,6 +62,13 @@ export async function placeOrder(input: PlaceOrderInput) {
   });
 
   const order = await prisma.$transaction(async (tx) => {
+    if (input.addressId) {
+      await tx.address.updateMany({
+        where: { id: input.addressId, customerId: customer.id },
+        data: { phone },
+      });
+    }
+
     for (const line of input.items) {
       const p = byId.get(line.productId)!;
       const result = await tx.inventory.updateMany({
