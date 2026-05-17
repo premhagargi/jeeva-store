@@ -77,7 +77,7 @@ export default async function ProductPage({
         <div className="grid grid-cols-3 gap-3 text-center">
           <div>
             <div className="text-2xl mb-1">⚡</div>
-            <p className="text-[11px] font-semibold text-gray-600 leading-tight">8-min delivery</p>
+            <p className="text-[11px] font-semibold text-gray-600 leading-tight">20-min delivery</p>
           </div>
           <div>
             <div className="text-2xl mb-1">✅</div>

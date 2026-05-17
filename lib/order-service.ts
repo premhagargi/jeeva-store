@@ -143,7 +143,7 @@ export async function getOrderById(id: string): Promise<Order> {
     total: o.total,
     address: o.address,
     phone: o.phone,
-    customer: { name: o.customer.name },
+    customer: { name: o.customerName ?? o.customer.name },
     reorderLines,
   };
 }

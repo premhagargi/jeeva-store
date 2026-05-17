@@ -20,7 +20,7 @@ export default function Footer() {
           for groceries, household items, and more.
         </p>
         <div className="flex items-center gap-4 mt-2 text-[11px] text-gray-400">
-          <span className="flex items-center gap-1">⚡ 8-min delivery</span>
+          <span className="flex items-center gap-1">⚡ 20-min delivery</span>
           <span className="flex items-center gap-1">✅ Best prices</span>
         </div>
         <p className="text-[10px] text-gray-300 mt-4">

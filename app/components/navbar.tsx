@@ -29,7 +29,7 @@ export default function Navbar() {
             <span className="inline-flex items-center gap-1 bg-emerald-50 border border-emerald-100 rounded-full px-2 py-0.5">
               <Zap size={10} className="text-emerald-600 fill-emerald-600" />
               <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-700">
-                Delivery in 10 min
+                Delivery in 20 min
               </span>
             </span>
           </div>

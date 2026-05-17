@@ -55,7 +55,7 @@ export default async function OrderDetail({
         <div className="mt-3 grid grid-cols-2 gap-3 text-[12px]">
           <div>
             <p className="text-[10px] uppercase tracking-widest text-gray-400 font-bold">Customer</p>
-            <p className="font-semibold text-gray-900">{o.customer.name ?? "—"}</p>
+            <p className="font-semibold text-gray-900">{o.customerName ?? o.customer.name ?? "—"}</p>
             <p className="text-emerald-600 font-semibold">{o.phone}</p>
           </div>
           <div>

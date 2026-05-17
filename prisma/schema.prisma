@@ -104,6 +104,7 @@ model Order {
   discount      Float       @default(0)
   total         Float
   phone         String
+  customerName  String?
   address       String
   customerNotes String?
   adminNotes    String?

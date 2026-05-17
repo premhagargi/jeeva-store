@@ -49,7 +49,7 @@ export async function fetchAdminOrders({
     shortId: o.id.slice(0, 8).toUpperCase(),
     status: o.status,
     phone: o.phone,
-    customerName: o.customer.name,
+    customerName: o.customerName ?? o.customer.name,
     address: o.address,
     total: o.total,
     createdAt: o.createdAt.toLocaleString("en-IN", {

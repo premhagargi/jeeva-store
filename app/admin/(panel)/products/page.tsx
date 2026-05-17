@@ -1,10 +1,40 @@
 import Link from "next/link";
-import { Search, Plus } from "lucide-react";
+import { Plus } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import ProductRow, { AdminProduct } from "./ProductRow";
 import ImportExportBar from "./ImportExportBar";
+import SearchBar from "./SearchBar";
 
 const PAGE_SIZE = 50;
+
+function normalize(s: string): string {
+  return s
+    .toLowerCase()
+    .normalize("NFKD")
+    .replace(/[̀-ͯ]/g, "")
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim();
+}
+
+function levenshtein(a: string, b: string): number {
+  if (a === b) return 0;
+  if (!a.length) return b.length;
+  if (!b.length) return a.length;
+  const m = a.length;
+  const n = b.length;
+  let prev = new Array(n + 1);
+  let curr = new Array(n + 1);
+  for (let j = 0; j <= n; j++) prev[j] = j;
+  for (let i = 1; i <= m; i++) {
+    curr[0] = i;
+    for (let j = 1; j <= n; j++) {
+      const cost = a.charCodeAt(i - 1) === b.charCodeAt(j - 1) ? 0 : 1;
+      curr[j] = Math.min(curr[j - 1] + 1, prev[j] + 1, prev[j - 1] + cost);
+    }
+    [prev, curr] = [curr, prev];
+  }
+  return prev[n];
+}
 
 export default async function AdminProducts({
   searchParams,
@@ -22,47 +52,124 @@ export default async function AdminProducts({
   const page = Math.max(1, parseInt(sp.page ?? "1", 10) || 1);
   const lowStock = sp.lowStock === "1";
 
-  const terms = q.split(/\s+/).filter(Boolean);
+  const nq = normalize(q);
+  const hasQuery = nq.length > 0;
 
-  const where: any = {};
-  if (terms.length > 0) {
-    where.AND = terms.map((t) => ({
-      OR: [
-        { name: { contains: t, mode: "insensitive" } },
-        { category: { name: { contains: t, mode: "insensitive" } } },
-      ],
-    }));
-  }
+  const baseWhere: any = {};
   if (lowStock) {
-    where.inventory = { stockQty: { lt: 10 } };
+    baseWhere.inventory = { stockQty: { lt: 10 } };
   }
 
-  const [rows, total] = await Promise.all([
-    prisma.product.findMany({
-      where,
+  let products: AdminProduct[] = [];
+  let total = 0;
+  let totalPages = 1;
+
+  if (hasQuery) {
+    const rows = await prisma.product.findMany({
+      where: baseWhere,
       include: { inventory: true, category: true },
-      orderBy: { name: "asc" },
-      take: PAGE_SIZE,
-      skip: (page - 1) * PAGE_SIZE,
-    }),
-    prisma.product.count({ where }),
-  ]);
+      take: 2000,
+    });
 
-  const products: AdminProduct[] = rows
-    .filter((p) => p.inventory)
-    .map((p) => ({
-      id: p.id,
-      name: p.name,
-      category: p.category.name,
-      unit: p.inventory!.unit,
-      quantityValue: p.inventory!.quantityValue,
-      price: p.inventory!.price ?? 0,
-      stockQty: p.inventory!.stockQty,
-      isAvailable: p.inventory!.isAvailable,
-      imageUrl: p.imageUrl,
-    }));
+    const qTokens = nq.split(/\s+/).filter(Boolean);
+    const nqCompact = nq.replace(/\s+/g, "");
 
-  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+    const scored = rows
+      .filter((p) => p.inventory)
+      .map((p) => {
+        const name = normalize(p.name);
+        const nameCompact = name.replace(/\s+/g, "");
+        const nameTokens = name.split(/\s+/).filter(Boolean);
+        const cat = normalize(p.category.name);
+
+        let score = 0;
+        if (name === nq) score += 1000;
+        else if (name.startsWith(nq)) score += 600;
+        else if (nameCompact === nqCompact) score += 700;
+        else if (nameCompact.startsWith(nqCompact)) score += 450;
+        else if (nameCompact.includes(nqCompact) && nqCompact.length >= 3) score += 220;
+
+        for (const t of qTokens) {
+          if (nameTokens.includes(t)) {
+            score += 120;
+            continue;
+          }
+          if (nameTokens.some((w) => w.startsWith(t))) {
+            score += 80;
+            continue;
+          }
+          if (name.includes(t)) {
+            score += 40;
+            continue;
+          }
+          let bestDist = Infinity;
+          let bestLen = 0;
+          for (const w of nameTokens) {
+            if (Math.abs(w.length - t.length) > 2) continue;
+            const d = levenshtein(w, t);
+            if (d < bestDist) {
+              bestDist = d;
+              bestLen = w.length;
+            }
+          }
+          if (bestDist === 1 && t.length >= 3) {
+            score += 50;
+            continue;
+          }
+          if (bestDist === 2 && t.length >= 5 && bestLen >= 5) {
+            score += 20;
+            continue;
+          }
+          if (cat.includes(t)) score += 25;
+        }
+
+        return { score, p };
+      })
+      .filter((s) => s.score > 0)
+      .sort((a, b) => b.score - a.score || a.p.name.localeCompare(b.p.name));
+
+    total = scored.length;
+    totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+    products = scored
+      .slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE)
+      .map(({ p }) => ({
+        id: p.id,
+        name: p.name,
+        category: p.category.name,
+        unit: p.inventory!.unit,
+        quantityValue: p.inventory!.quantityValue,
+        price: p.inventory!.price ?? 0,
+        stockQty: p.inventory!.stockQty,
+        isAvailable: p.inventory!.isAvailable,
+        imageUrl: p.imageUrl,
+      }));
+  } else {
+    const [rows, count] = await Promise.all([
+      prisma.product.findMany({
+        where: baseWhere,
+        include: { inventory: true, category: true },
+        orderBy: { name: "asc" },
+        take: PAGE_SIZE,
+        skip: (page - 1) * PAGE_SIZE,
+      }),
+      prisma.product.count({ where: baseWhere }),
+    ]);
+    total = count;
+    totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+    products = rows
+      .filter((p) => p.inventory)
+      .map((p) => ({
+        id: p.id,
+        name: p.name,
+        category: p.category.name,
+        unit: p.inventory!.unit,
+        quantityValue: p.inventory!.quantityValue,
+        price: p.inventory!.price ?? 0,
+        stockQty: p.inventory!.stockQty,
+        isAvailable: p.inventory!.isAvailable,
+        imageUrl: p.imageUrl,
+      }));
+  }
 
   return (
     <div className="px-4 py-4 flex flex-col gap-4">
@@ -82,31 +189,7 @@ export default async function AdminProducts({
 
       <ImportExportBar />
 
-      <form action="/admin/products" method="get" className="flex flex-col gap-2">
-        <div className="flex items-center gap-2 bg-white border border-gray-100 rounded-xl px-3 py-2.5 shadow-sm">
-          <Search size={16} className="text-gray-400" />
-          <input
-            name="q"
-            defaultValue={q}
-            placeholder="Search products or categories..."
-            className="flex-1 bg-transparent text-[14px] text-gray-800 outline-none"
-          />
-          {lowStock && <input type="hidden" name="lowStock" value="1" />}
-        </div>
-        <div className="flex items-center gap-2">
-          <a
-            href={lowStock ? "/admin/products" : "/admin/products?lowStock=1"}
-            className={`text-[12px] font-semibold px-3 py-1.5 rounded-full ${
-              lowStock ? "bg-red-500 text-white" : "bg-white border border-gray-200 text-gray-600"
-            }`}
-          >
-            {lowStock ? "Low stock ✕" : "Low stock only"}
-          </a>
-          <span className="text-[12px] text-gray-400">
-            {total} result{total === 1 ? "" : "s"}
-          </span>
-        </div>
-      </form>
+      <SearchBar initialQuery={q} lowStock={lowStock} total={total} />
 
       <div className="flex flex-col gap-3">
         {products.length === 0 ? (

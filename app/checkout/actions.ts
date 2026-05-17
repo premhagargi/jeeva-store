@@ -89,6 +89,7 @@ export async function placeOrder(input: PlaceOrderInput) {
       data: {
         customerId: customer.id,
         phone,
+        customerName: name || customer.name || null,
         address,
         customerNotes: notes,
         itemTotal,

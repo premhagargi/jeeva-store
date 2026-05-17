@@ -53,7 +53,7 @@ export default async function OrderPrintPage({
           <p className="text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-1">
             Customer
           </p>
-          <p className="font-semibold">{o.customer.name ?? "Customer"}</p>
+          <p className="font-semibold">{o.customerName ?? o.customer.name ?? "Customer"}</p>
           <p>{o.phone}</p>
         </div>
 
