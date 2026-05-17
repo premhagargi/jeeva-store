@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { Trash2, Save, Edit3 } from "lucide-react";
+import Link from "next/link";
+import { Trash2, Save, Edit3, ChevronRight, Package } from "lucide-react";
 import { updateCategory, deleteCategory } from "./actions";
 import { CATEGORY_BG_PALETTE, styleForCategory } from "@/lib/category-style";
 
@@ -139,6 +140,19 @@ export default function CategoryRow({ category }: Props) {
         </div>
       )}
       {error && <p className="text-[11px] text-red-500 font-medium">{error}</p>}
+
+      {!editing && (
+        <Link
+          href={`/admin/categories/${category.id}`}
+          className="flex items-center justify-between gap-2 mt-1 border-t border-gray-100 pt-3 -mb-1 active:bg-gray-50 -mx-3 px-3 rounded-b-2xl"
+        >
+          <span className="flex items-center gap-2 text-[12px] font-semibold text-emerald-700">
+            <Package size={13} />
+            Manage products ({category.productCount})
+          </span>
+          <ChevronRight size={14} className="text-gray-400" />
+        </Link>
+      )}
     </div>
   );
 }

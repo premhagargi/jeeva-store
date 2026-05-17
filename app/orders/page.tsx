@@ -43,28 +43,54 @@ function OrdersContent() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const fetchOrders = useCallback(async (phoneNumber: string) => {
-    if (!phoneNumber) {
-      setOrders([]);
-      setLoading(false);
-      return;
-    }
-    setLoading(true);
-    try {
-      const res = await fetch(`/api/orders?phone=${encodeURIComponent(phoneNumber)}`);
-      if (res.ok) {
-        const data = await res.json();
-        setOrders(data.orders || []);
+  const fetchOrders = useCallback(
+    async (phoneNumber: string, opts: { silent?: boolean } = {}) => {
+      if (!phoneNumber) {
+        setOrders([]);
+        setLoading(false);
+        return;
       }
-    } catch {
-      setOrders([]);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+      if (!opts.silent) setLoading(true);
+      try {
+        const res = await fetch(`/api/orders?phone=${encodeURIComponent(phoneNumber)}`, {
+          cache: "no-store",
+        });
+        if (res.ok) {
+          const data = await res.json();
+          setOrders(data.orders || []);
+        }
+      } catch {
+        if (!opts.silent) setOrders([]);
+      } finally {
+        if (!opts.silent) setLoading(false);
+      }
+    },
+    []
+  );
 
   useEffect(() => {
     fetchOrders(phone);
+  }, [phone, fetchOrders]);
+
+  useEffect(() => {
+    if (!phone) return;
+    let cancelled = false;
+    const interval = window.setInterval(() => {
+      if (cancelled) return;
+      if (document.visibilityState !== "visible") return;
+      fetchOrders(phone, { silent: true });
+    }, 10000);
+    const onVisible = () => {
+      if (document.visibilityState === "visible") {
+        fetchOrders(phone, { silent: true });
+      }
+    };
+    document.addEventListener("visibilitychange", onVisible);
+    return () => {
+      cancelled = true;
+      window.clearInterval(interval);
+      document.removeEventListener("visibilitychange", onVisible);
+    };
   }, [phone, fetchOrders]);
 
   if (!phone) {

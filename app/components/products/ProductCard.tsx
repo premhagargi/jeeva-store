@@ -26,16 +26,16 @@ export default function ProductCard({ product }: { product: ProductCardData }) {
     product.quantityValue != null ? `${product.quantityValue} ${product.unit}` : product.unit;
 
   return (
-    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-3 flex flex-col">
+    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden flex flex-col">
       <Link href={`/product/${product.slug}`} className="block">
         <div
-          className={`w-full aspect-square rounded-xl flex items-center justify-center text-4xl mb-2 overflow-hidden relative ${
+          className={`w-full aspect-square flex items-center justify-center text-4xl overflow-hidden relative ${
             product.imageUrl ? "bg-gray-50" : product.bg
           }`}
         >
           {product.imageUrl ? (
             <Image
-              src={optimizeCld(product.imageUrl, { width: 240 })}
+              src={optimizeCld(product.imageUrl, { width: 320 })}
               alt={product.name}
               fill
               sizes="(max-width: 768px) 50vw, 200px"
@@ -45,13 +45,15 @@ export default function ProductCard({ product }: { product: ProductCardData }) {
             product.emoji
           )}
         </div>
-        <p className="text-[12.5px] font-semibold text-gray-800 leading-snug line-clamp-2 min-h-[34px]">
-          {product.name}
-        </p>
-        <p className="text-[11px] text-gray-400 mt-0.5">{qtyLabel}</p>
+        <div className="px-2.5 pt-2">
+          <p className="text-[12.5px] font-semibold text-gray-800 leading-snug line-clamp-2 min-h-[34px]">
+            {product.name}
+          </p>
+          <p className="text-[11px] text-gray-400 mt-0.5">{qtyLabel}</p>
+        </div>
       </Link>
 
-      <div className="flex items-center justify-between mt-2">
+      <div className="flex items-center justify-between mt-2 px-2.5 pb-2.5">
         <span className="text-[14px] font-bold text-gray-900">₹{product.price}</span>
 
         {qty === 0 ? (

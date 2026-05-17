@@ -59,6 +59,77 @@ export async function deleteCategory(id: string) {
   revalidatePath("/");
 }
 
+export async function createProductInCategory(
+  categoryId: string,
+  input: {
+    name: string;
+    quantityValue: number | null;
+    unit: string;
+    price: number;
+    stockQty: number;
+    isAvailable?: boolean;
+  },
+) {
+  const me = await requireAdmin();
+
+  const name = input.name.trim();
+  const unit = input.unit.trim();
+  if (!name) throw new Error("Name is required");
+  if (!unit) throw new Error("Unit is required");
+  if (!Number.isFinite(input.price) || input.price < 0) throw new Error("Invalid price");
+  if (!Number.isInteger(input.stockQty) || input.stockQty < 0) throw new Error("Invalid stock");
+  if (
+    input.quantityValue != null &&
+    (!Number.isFinite(input.quantityValue) || input.quantityValue <= 0)
+  ) {
+    throw new Error("Invalid quantity");
+  }
+
+  const category = await prisma.category.findUnique({ where: { id: categoryId } });
+  if (!category) throw new Error("Category not found");
+
+  const qty = input.quantityValue != null ? input.quantityValue : 1;
+  const slug = slugifyName(`${name} ${qty} ${unit}`);
+  const existing = await prisma.product.findUnique({ where: { slug } });
+  if (existing) throw new Error("A product with the same name + size already exists");
+
+  const product = await prisma.product.create({
+    data: {
+      name,
+      slug,
+      categoryId: category.id,
+      inventory: {
+        create: {
+          unit,
+          quantityValue: input.quantityValue,
+          price: input.price,
+          stockQty: input.stockQty,
+          isAvailable: input.isAvailable ?? true,
+        },
+      },
+    },
+    include: { inventory: true },
+  });
+
+  await logAudit(me.id, "create", "product", product.id, `name=${name}`);
+
+  revalidatePath("/admin/products");
+  revalidatePath(`/admin/categories/${category.id}`);
+  revalidatePath("/admin/categories");
+  revalidatePath("/");
+  revalidatePath(`/category/${category.slug}`);
+
+  return {
+    id: product.id,
+    name: product.name,
+    unit: product.inventory!.unit,
+    quantityValue: product.inventory!.quantityValue,
+    price: product.inventory!.price ?? 0,
+    stockQty: product.inventory!.stockQty,
+    isAvailable: product.inventory!.isAvailable,
+  };
+}
+
 export async function createCategory(formData: FormData) {
   const me = await requireAdmin();
   const name = String(formData.get("name") ?? "").trim();

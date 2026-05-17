@@ -40,25 +40,40 @@ function OrderDetailContent({
 
   useEffect(() => {
     let cancelled = false;
-    async function load() {
+    async function load(silent: boolean) {
       try {
-        const res = await fetch(`/api/orders/${encodeURIComponent(id)}`);
+        const res = await fetch(`/api/orders/${encodeURIComponent(id)}`, {
+          cache: "no-store",
+        });
         if (cancelled) return;
         if (!res.ok) {
-          setOrder(null);
+          if (!silent) setOrder(null);
         } else {
           const data = await res.json();
           if (!cancelled) setOrder(data.order ?? null);
         }
       } catch {
-        if (!cancelled) setOrder(null);
+        if (!cancelled && !silent) setOrder(null);
       } finally {
-        if (!cancelled) setLoading(false);
+        if (!cancelled && !silent) setLoading(false);
       }
     }
-    load();
+    load(false);
+
+    const interval = window.setInterval(() => {
+      if (cancelled) return;
+      if (document.visibilityState !== "visible") return;
+      load(true);
+    }, 8000);
+    const onVisible = () => {
+      if (document.visibilityState === "visible") load(true);
+    };
+    document.addEventListener("visibilitychange", onVisible);
+
     return () => {
       cancelled = true;
+      window.clearInterval(interval);
+      document.removeEventListener("visibilitychange", onVisible);
     };
   }, [id]);
 

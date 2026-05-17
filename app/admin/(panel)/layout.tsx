@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { unstable_cache } from "next/cache";
 import { getAdminSession, logoutAdmin } from "@/lib/admin-auth";
 import { prisma } from "@/lib/prisma";
 import AdminNav from "./AdminNav";
@@ -10,6 +11,12 @@ async function logout() {
   redirect("/admin/login");
 }
 
+const getLowStockCount = unstable_cache(
+  () => prisma.inventory.count({ where: { stockQty: { lte: 5 } } }),
+  ["admin-low-stock-count"],
+  { revalidate: 60, tags: ["inventory"] }
+);
+
 export default async function AdminPanelLayout({
   children,
 }: {
@@ -18,9 +25,7 @@ export default async function AdminPanelLayout({
   const session = await getAdminSession();
   if (!session) redirect("/admin/login");
 
-  const lowStockCount = await prisma.inventory.count({
-    where: { stockQty: { lte: 5 } },
-  });
+  const lowStockCount = await getLowStockCount();
 
   return (
     <div className="min-h-screen bg-gray-50">

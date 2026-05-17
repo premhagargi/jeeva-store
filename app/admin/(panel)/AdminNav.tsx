@@ -42,6 +42,7 @@ export default function AdminNav() {
           <Link
             key={n.href}
             href={n.href}
+            prefetch={true}
             className={`shrink-0 px-3 py-1.5 rounded-full text-[13px] font-semibold flex items-center gap-1.5 transition-colors ${
               active
                 ? "bg-emerald-500 text-white shadow-sm shadow-emerald-200"

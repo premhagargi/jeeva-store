@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
-import { ChevronLeft, Search as SearchIcon } from "lucide-react";
+import { ChevronLeft, Search as SearchIcon, Clock, TrendingUp, X } from "lucide-react";
 import ProductCard from "@/app/components/products/ProductCard";
 import { ShimmerCardGrid } from "@/app/components/ShimmerCard";
 
@@ -19,6 +19,41 @@ interface Product {
   isAvailable: boolean;
 }
 
+interface CategorySuggestion {
+  id: string;
+  slug: string;
+  name: string;
+  productCount: number;
+  emoji: string;
+  bg: string;
+}
+
+const RECENT_KEY = "jeeva-recent-searches";
+const TRENDING_TERMS = ["Rice", "Milk", "Soap", "Bread", "Eggs", "Sugar", "Oil", "Atta"];
+
+function loadRecent(): string[] {
+  if (typeof window === "undefined") return [];
+  try {
+    const raw = window.localStorage.getItem(RECENT_KEY);
+    if (!raw) return [];
+    const arr = JSON.parse(raw);
+    return Array.isArray(arr) ? arr.filter((s) => typeof s === "string").slice(0, 8) : [];
+  } catch {
+    return [];
+  }
+}
+
+function saveRecent(term: string) {
+  if (typeof window === "undefined") return;
+  const t = term.trim();
+  if (!t) return;
+  const existing = loadRecent().filter((s) => s.toLowerCase() !== t.toLowerCase());
+  const next = [t, ...existing].slice(0, 8);
+  try {
+    window.localStorage.setItem(RECENT_KEY, JSON.stringify(next));
+  } catch {}
+}
+
 export default function SearchPage({
   searchParams,
 }: {
@@ -28,7 +63,17 @@ export default function SearchPage({
   const [recommendations, setRecommendations] = useState<Product[]>([]);
   const [loading, setLoading] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
+  const [recent, setRecent] = useState<string[]>([]);
+  const [categories, setCategories] = useState<CategorySuggestion[]>([]);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    setRecent(loadRecent());
+    fetch("/api/categories")
+      .then((r) => (r.ok ? r.json() : { categories: [] }))
+      .then((d) => setCategories(d.categories ?? []))
+      .catch(() => setCategories([]));
+  }, []);
 
   // Read initial search params
   useEffect(() => {
@@ -98,9 +143,23 @@ export default function SearchPage({
     const t = setTimeout(() => {
       window.history.replaceState(null, "", `/search?q=${encodeURIComponent(q)}`);
       performSearch(q);
+      saveRecent(q);
+      setRecent(loadRecent());
     }, 250);
     return () => clearTimeout(t);
   }, [query]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  function pickTerm(term: string) {
+    setQuery(term);
+    inputRef.current?.focus();
+  }
+
+  function clearRecent() {
+    try {
+      window.localStorage.removeItem(RECENT_KEY);
+    } catch {}
+    setRecent([]);
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 pb-24">
@@ -146,9 +205,101 @@ export default function SearchPage({
       </div>
 
       {!hasSearched && query === "" ? (
-        <div className="px-8 py-16 text-center">
-          <div className="text-5xl mb-3">🔎</div>
-          <p className="text-[14px] text-gray-500">Type to search across all products.</p>
+        <div className="px-4 pt-4 pb-8 flex flex-col gap-5">
+          {recent.length > 0 && (
+            <section>
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center gap-1.5">
+                  <Clock size={13} className="text-gray-400" />
+                  <p className="text-[12px] font-bold uppercase tracking-widest text-gray-400">
+                    Recent
+                  </p>
+                </div>
+                <button
+                  onClick={clearRecent}
+                  className="text-[11px] font-semibold text-gray-400 active:text-gray-600"
+                >
+                  Clear
+                </button>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {recent.map((t) => (
+                  <button
+                    key={t}
+                    onClick={() => pickTerm(t)}
+                    className="inline-flex items-center gap-1.5 bg-white border border-gray-100 rounded-full pl-3 pr-2 py-1.5 text-[12px] font-semibold text-gray-700 active:bg-gray-50"
+                  >
+                    <span className="truncate max-w-[160px]">{t}</span>
+                    <span
+                      role="button"
+                      aria-label={`Remove ${t}`}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        const next = recent.filter((s) => s !== t);
+                        setRecent(next);
+                        try {
+                          window.localStorage.setItem(RECENT_KEY, JSON.stringify(next));
+                        } catch {}
+                      }}
+                      className="w-4 h-4 rounded-full flex items-center justify-center text-gray-400 active:text-gray-700"
+                    >
+                      <X size={11} />
+                    </span>
+                  </button>
+                ))}
+              </div>
+            </section>
+          )}
+
+          <section>
+            <div className="flex items-center gap-1.5 mb-2">
+              <TrendingUp size={13} className="text-emerald-500" />
+              <p className="text-[12px] font-bold uppercase tracking-widest text-gray-400">
+                Trending
+              </p>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {TRENDING_TERMS.map((t) => (
+                <button
+                  key={t}
+                  onClick={() => pickTerm(t)}
+                  className="bg-emerald-50 border border-emerald-100 rounded-full px-3 py-1.5 text-[12px] font-semibold text-emerald-700 active:bg-emerald-100"
+                >
+                  {t}
+                </button>
+              ))}
+            </div>
+          </section>
+
+          {categories.length > 0 && (
+            <section>
+              <p className="text-[12px] font-bold uppercase tracking-widest text-gray-400 mb-2">
+                Browse categories
+              </p>
+              <div className="grid grid-cols-4 gap-x-3 gap-y-4">
+                {categories.map((c) => (
+                  <Link
+                    key={c.id}
+                    href={`/category/${c.slug}`}
+                    className="flex flex-col items-center gap-1.5 group"
+                  >
+                    <div
+                      className={`w-full aspect-square rounded-2xl flex items-center justify-center text-3xl shadow-sm ${c.bg} group-active:scale-95 transition-transform`}
+                    >
+                      {c.emoji}
+                    </div>
+                    <span className="text-[11px] font-semibold text-gray-700 text-center leading-snug line-clamp-2">
+                      {c.name}
+                    </span>
+                  </Link>
+                ))}
+              </div>
+            </section>
+          )}
+
+          <p className="text-center text-[11px] text-gray-400 pt-2">
+            Type to search across all products
+          </p>
         </div>
       ) : loading ? (
         // Shimmer skeleton while searching
