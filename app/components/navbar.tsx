@@ -1,8 +1,8 @@
 "use client";
 
 import { useRouter, usePathname } from "next/navigation";
-import { User, Zap } from "lucide-react";
-import SearchRecommendations from "./SearchRecommendations";
+import { User, Zap, Search } from "lucide-react";
+import Link from "next/link";
 
 export default function Navbar() {
   const router = useRouter();
@@ -57,7 +57,18 @@ export default function Navbar() {
         </div>
       </div>
 
-      {showSearchBar && <SearchRecommendations />}
+      {showSearchBar && (
+        <Link
+          href="/search"
+          aria-label="Search products"
+          className="flex items-center gap-2 bg-gray-100 rounded-xl px-3 py-2.5 active:bg-gray-200 transition-colors"
+        >
+          <Search size={16} className="shrink-0 text-gray-400" />
+          <span className="flex-1 text-sm text-gray-400 truncate">
+            Search for &quot;rice&quot;, &quot;soap&quot;...
+          </span>
+        </Link>
+      )}
     </nav>
   );
 }

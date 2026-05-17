@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { Search, X, Loader2 } from "lucide-react";
-import Link from "next/link";
+import ProductCard from "./products/ProductCard";
 
 interface Product {
   id: string;
@@ -20,7 +20,7 @@ interface Product {
 
 const DEBOUNCE_MS = 300;
 const MIN_QUERY_LENGTH = 2;
-const MAX_RESULTS = 8;
+const MAX_RESULTS = 20;
 
 export default function SearchRecommendations() {
   const router = useRouter();
@@ -99,10 +99,6 @@ export default function SearchRecommendations() {
     }
   };
 
-  const handleResultClick = () => {
-    setShowResults(false);
-  };
-
   return (
     <div className="relative w-full" ref={wrapperRef}>
       <form
@@ -117,12 +113,11 @@ export default function SearchRecommendations() {
             setQuery(e.target.value);
             setShowResults(true);
           }}
-          onFocus={() => setIsFocused(true)}
-          onBlur={() => {
-            setIsFocused(false);
-            // Delay hiding to allow click on results
-            setTimeout(() => setShowResults(false), 200);
+          onFocus={() => {
+            setIsFocused(true);
+            setShowResults(true);
           }}
+          onBlur={() => setIsFocused(false)}
           onClick={() => setShowResults(true)}
           placeholder='Search for "rice", "soap"...'
           className="flex-1 bg-transparent text-sm text-gray-700 placeholder-gray-400 outline-none"
@@ -144,43 +139,40 @@ export default function SearchRecommendations() {
         )}
       </form>
 
-      {/* Recommendations Dropdown */}
+      {/* Inline search results panel */}
       {showResults && (query.length >= MIN_QUERY_LENGTH || recommendations.length > 0) && (
-        <div className="absolute top-full left-0 right-0 mt-1.5 bg-white rounded-2xl border border-gray-100 shadow-xl z-50 max-h-[420px] overflow-y-auto">
+        <div className="absolute top-full left-0 right-0 mt-1.5 bg-white rounded-2xl border border-gray-100 shadow-xl z-50 max-h-[70vh] overflow-y-auto">
           {loading ? (
-            <div className="py-2">
+            <div className="p-3 grid grid-cols-2 gap-3">
               {[...Array(4)].map((_, i) => (
-                <div key={i} className="flex items-center gap-3 px-4 py-2.5">
-                  <div className="h-4 w-4 rounded bg-gray-100" />
-                  <div className="h-3 flex-1 rounded bg-gray-100" />
+                <div key={i} className="bg-gray-50 rounded-2xl p-3">
+                  <div className="aspect-square rounded-xl bg-gray-100 mb-2" />
+                  <div className="h-3 bg-gray-100 rounded w-3/4 mb-1" />
+                  <div className="h-3 bg-gray-100 rounded w-1/2" />
                 </div>
               ))}
             </div>
           ) : recommendations.length === 0 ? (
             query.length >= MIN_QUERY_LENGTH ? (
-              <div className="px-4 py-6 text-center">
-                <p className="text-[13px] text-gray-400">
-                  No results for "{query}"
+              <div className="px-4 py-8 text-center">
+                <div className="text-3xl mb-2">🤔</div>
+                <p className="text-[13px] font-semibold text-gray-700">
+                  No matches for &quot;{query}&quot;
                 </p>
+                <p className="text-[11px] text-gray-400 mt-1">Try a shorter or different term.</p>
               </div>
             ) : null
           ) : (
-            <ul className="py-1">
-              {recommendations.map((p) => (
-                <li key={p.id}>
-                  <Link
-                    href={`/product/${p.slug}`}
-                    onClick={handleResultClick}
-                    className="flex items-center gap-3 px-4 py-2.5 hover:bg-gray-50 active:bg-gray-100 transition-colors"
-                  >
-                    <Search size={14} className="shrink-0 text-gray-400" />
-                    <span className="text-[14px] text-gray-700 truncate">
-                      {p.name}
-                    </span>
-                  </Link>
-                </li>
-              ))}
-            </ul>
+            <>
+              <p className="px-4 pt-3 pb-1 text-[11px] font-semibold uppercase tracking-wider text-gray-400">
+                {recommendations.length} result{recommendations.length === 1 ? "" : "s"}
+              </p>
+              <div className="p-3 grid grid-cols-2 gap-3">
+                {recommendations.map((p) => (
+                  <ProductCard key={p.id} product={p} />
+                ))}
+              </div>
+            </>
           )}
         </div>
       )}

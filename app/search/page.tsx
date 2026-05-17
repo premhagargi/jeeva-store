@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { ChevronLeft, Search as SearchIcon } from "lucide-react";
 import ProductCard from "@/app/components/products/ProductCard";
@@ -28,6 +28,7 @@ export default function SearchPage({
   const [recommendations, setRecommendations] = useState<Product[]>([]);
   const [loading, setLoading] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   // Read initial search params
   useEffect(() => {
@@ -41,6 +42,21 @@ export default function SearchPage({
     };
     getParams();
   }, [searchParams]);
+
+  // Force-focus the input on mount (autoFocus alone is unreliable after client-side nav, especially on mobile)
+  useEffect(() => {
+    const el = inputRef.current;
+    if (!el) return;
+    const focus = () => {
+      el.focus();
+      // Move caret to end so the user can keep typing
+      const len = el.value.length;
+      try { el.setSelectionRange(len, len); } catch {}
+    };
+    focus();
+    const t = setTimeout(focus, 80);
+    return () => clearTimeout(t);
+  }, []);
 
   async function performSearch(searchQuery: string) {
     setLoading(true);
@@ -64,10 +80,27 @@ export default function SearchPage({
     e.preventDefault();
     const q = query.trim();
     if (!q) return;
-    // Replace URL without re-running server search
     window.history.replaceState(null, "", `/search?q=${encodeURIComponent(q)}`);
     await performSearch(q);
+    inputRef.current?.blur();
   };
+
+  // Debounced live search as the user types
+  useEffect(() => {
+    const q = query.trim();
+    if (q.length < 2) {
+      if (hasSearched && q.length === 0) {
+        setRecommendations([]);
+        setHasSearched(false);
+      }
+      return;
+    }
+    const t = setTimeout(() => {
+      window.history.replaceState(null, "", `/search?q=${encodeURIComponent(q)}`);
+      performSearch(q);
+    }, 250);
+    return () => clearTimeout(t);
+  }, [query]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <div className="min-h-screen bg-gray-50 pb-24">
@@ -83,13 +116,31 @@ export default function SearchPage({
           <div className="flex items-center gap-2 bg-gray-100 rounded-xl px-3 py-2.5">
             <SearchIcon size={16} className="text-gray-400 shrink-0" />
             <input
+              ref={inputRef}
               name="q"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               autoFocus
+              enterKeyHint="search"
               placeholder="Search products, categories..."
               className="flex-1 bg-transparent text-sm text-gray-700 placeholder-gray-400 outline-none"
             />
+            {query && (
+              <button
+                type="button"
+                onClick={() => {
+                  setQuery("");
+                  setRecommendations([]);
+                  setHasSearched(false);
+                  window.history.replaceState(null, "", "/search");
+                  inputRef.current?.focus();
+                }}
+                aria-label="Clear"
+                className="text-gray-400 active:text-gray-600"
+              >
+                ✕
+              </button>
+            )}
           </div>
         </form>
       </div>

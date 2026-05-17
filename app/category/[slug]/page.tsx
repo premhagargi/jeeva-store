@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ChevronLeft } from "lucide-react";
+import { ChevronLeft, Search } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { styleFor } from "@/lib/category-style";
 import ProductCard from "@/app/components/products/ProductCard";
@@ -58,9 +58,13 @@ export default async function CategoryPage({
           <h1 className="text-[16px] font-bold text-gray-900 truncate">{category.name}</h1>
           <p className="text-[11px] text-gray-400">{products.length} products</p>
         </div>
-        <span className={`w-10 h-10 rounded-xl flex items-center justify-center text-2xl ${style.bg}`}>
-          {style.emoji}
-        </span>
+        <Link
+          href="/search"
+          aria-label="Search products"
+          className="w-10 h-10 rounded-xl flex items-center justify-center bg-gray-100 active:bg-gray-200 transition-colors"
+        >
+          <Search size={18} className="text-gray-700" />
+        </Link>
       </div>
 
       {products.length === 0 ? (
