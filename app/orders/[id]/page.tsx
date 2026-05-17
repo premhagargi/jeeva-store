@@ -12,12 +12,12 @@ import type { Order } from "@/lib/order-service";
 
 type OrderStatus = "processing" | "out_for_delivery" | "delivered" | "cancelled";
 
-const STATUS_MAP: Record<string, OrderStatus> = {
-  PROCESSING: "processing",
-  OUT_FOR_DELIVERY: "out_for_delivery",
-  DELIVERED: "delivered",
-  CANCELLED: "cancelled",
-};
+const VALID_STATUSES: OrderStatus[] = [
+  "processing",
+  "out_for_delivery",
+  "delivered",
+  "cancelled",
+];
 
 const TIMELINE: Array<{ key: OrderStatus; label: string; icon: any }> = [
   { key: "processing", label: "Order placed", icon: Check },
@@ -120,7 +120,8 @@ function OrderDetailContent({
 
   if (!order) notFound();
 
-  const status = STATUS_MAP[order.status] ?? "processing";
+  const rawStatus = order.status as OrderStatus;
+  const status: OrderStatus = VALID_STATUSES.includes(rawStatus) ? rawStatus : "processing";
   const isCancelled = status === "cancelled";
 
   const placedAt = `${order.date}, ${order.time}`;

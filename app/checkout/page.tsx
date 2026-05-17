@@ -4,7 +4,12 @@ import Link from "next/link";
 import { useEffect, useState, useTransition } from "react";
 import { ChevronLeft, MapPin, Check, Plus, ShoppingBag, Truck } from "lucide-react";
 import { useCart, clearCart } from "@/lib/cart";
-import { getStoredPhone, setStoredPhone } from "@/lib/customer";
+import {
+  getStoredPhone,
+  setStoredPhone,
+  getSelectedAddressId,
+  setSelectedAddressId,
+} from "@/lib/customer";
 import { placeOrder } from "./actions";
 
 type SavedAddress = {
@@ -18,6 +23,7 @@ type SavedAddress = {
   state: string | null;
   pincode: string | null;
   isDefault: boolean;
+  createdAt: string;
 };
 
 function formatAddress(a: SavedAddress): string {
@@ -67,10 +73,16 @@ export default function CheckoutPage() {
           const list: SavedAddress[] = data.addresses ?? [];
           setSavedAddresses(list);
           if (list.length > 0 && !selectedId && !useManual) {
-            const def = list.find((a) => a.isDefault) ?? list[0];
-            setSelectedId(def.id);
-            setAddress(formatAddress(def));
-            if (def.fullName && !name) setName(def.fullName);
+            const storedId = getSelectedAddressId();
+            const stored = storedId ? list.find((a) => a.id === storedId) : null;
+            const oldest = [...list].sort(
+              (a, b) =>
+                new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
+            )[0];
+            const initial = stored ?? oldest ?? list[0];
+            setSelectedId(initial.id);
+            setAddress(formatAddress(initial));
+            if (initial.fullName && !name) setName(initial.fullName);
           }
         }
       } catch {}
@@ -80,6 +92,7 @@ export default function CheckoutPage() {
 
   function selectSaved(a: SavedAddress) {
     setSelectedId(a.id);
+    setSelectedAddressId(a.id);
     setUseManual(false);
     setAddress(formatAddress(a));
     if (a.fullName) setName(a.fullName);

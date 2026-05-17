@@ -18,3 +18,16 @@ export function clearStoredPhone() {
     window.localStorage.removeItem(PHONE_KEY);
   }
 }
+
+const SELECTED_ADDRESS_KEY = "jeeva-selected-address-id";
+
+export function getSelectedAddressId(): string | null {
+  if (typeof window === "undefined") return null;
+  return window.localStorage.getItem(SELECTED_ADDRESS_KEY);
+}
+
+export function setSelectedAddressId(id: string | null) {
+  if (typeof window === "undefined") return;
+  if (id) window.localStorage.setItem(SELECTED_ADDRESS_KEY, id);
+  else window.localStorage.removeItem(SELECTED_ADDRESS_KEY);
+}

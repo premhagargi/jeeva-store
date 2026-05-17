@@ -37,7 +37,7 @@ function loadRecent(): string[] {
     const raw = window.localStorage.getItem(RECENT_KEY);
     if (!raw) return [];
     const arr = JSON.parse(raw);
-    return Array.isArray(arr) ? arr.filter((s) => typeof s === "string").slice(0, 8) : [];
+    return Array.isArray(arr) ? arr.filter((s) => typeof s === "string").slice(0, 4) : [];
   } catch {
     return [];
   }
@@ -48,7 +48,7 @@ function saveRecent(term: string) {
   const t = term.trim();
   if (!t) return;
   const existing = loadRecent().filter((s) => s.toLowerCase() !== t.toLowerCase());
-  const next = [t, ...existing].slice(0, 8);
+  const next = [t, ...existing].slice(0, 4);
   try {
     window.localStorage.setItem(RECENT_KEY, JSON.stringify(next));
   } catch {}
@@ -222,14 +222,14 @@ export default function SearchPage({
                   Clear
                 </button>
               </div>
-              <div className="flex flex-wrap gap-2">
-                {recent.map((t) => (
+              <div className="flex gap-2 overflow-hidden">
+                {recent.slice(0, 4).map((t) => (
                   <button
                     key={t}
                     onClick={() => pickTerm(t)}
-                    className="inline-flex items-center gap-1.5 bg-white border border-gray-100 rounded-full pl-3 pr-2 py-1.5 text-[12px] font-semibold text-gray-700 active:bg-gray-50"
+                    className="inline-flex items-center gap-1.5 bg-white border border-gray-100 rounded-full pl-3 pr-2 py-1.5 text-[12px] font-semibold text-gray-700 active:bg-gray-50 shrink-0 min-w-0"
                   >
-                    <span className="truncate max-w-[160px]">{t}</span>
+                    <span className="truncate max-w-[110px]">{t}</span>
                     <span
                       role="button"
                       aria-label={`Remove ${t}`}

@@ -3,6 +3,7 @@
 import { usePathname } from "next/navigation";
 import Link from "next/link";
 import { Home, ShoppingBag, ShoppingCart } from "lucide-react";
+import { useCart } from "@/lib/cart";
 
 const tabs = [
   { label: "Home",   href: "/",       icon: Home },
@@ -12,6 +13,8 @@ const tabs = [
 
 export default function BottomNav() {
   const pathname = usePathname();
+  const cart = useCart();
+  const cartCount = cart.reduce((sum, l) => sum + l.qty, 0);
 
   if (pathname?.startsWith("/product/")) return null;
   if (pathname?.startsWith("/admin")) return null;
@@ -47,6 +50,11 @@ export default function BottomNav() {
                       active ? "text-white" : "text-gray-400 group-hover:text-gray-600"
                     }`}
                   />
+                  {href === "/cart" && cartCount > 0 && (
+                    <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-red-500 text-white text-[10px] font-bold flex items-center justify-center shadow-sm ring-2 ring-white">
+                      {cartCount > 99 ? "99+" : cartCount}
+                    </span>
+                  )}
                 </div>
 
                 {/* Label */}
