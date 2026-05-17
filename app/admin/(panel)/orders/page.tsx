@@ -1,17 +1,9 @@
 import Link from "next/link";
 import { Search } from "lucide-react";
-import { prisma } from "@/lib/prisma";
-import OrderRow, { AdminOrder } from "./OrderRow";
-import type { OrderStatus, Prisma } from "@prisma/client";
+import { fetchAdminOrders, FILTERS } from "./query";
+import OrdersList from "./OrdersList";
 
-const FILTERS: Array<{ key: string; label: string; status?: OrderStatus }> = [
-  { key: "all", label: "All" },
-  { key: "active", label: "Active" },
-  { key: "processing", label: "Processing", status: "PROCESSING" },
-  { key: "out", label: "Out for delivery", status: "OUT_FOR_DELIVERY" },
-  { key: "delivered", label: "Delivered", status: "DELIVERED" },
-  { key: "cancelled", label: "Cancelled", status: "CANCELLED" },
-];
+export const dynamic = "force-dynamic";
 
 export default async function AdminOrders({
   searchParams,
@@ -22,58 +14,7 @@ export default async function AdminOrders({
   const filter = sp.filter ?? "active";
   const q = (sp.q ?? "").trim();
 
-  const where: Prisma.OrderWhereInput = {};
-  if (filter === "active") {
-    where.status = { in: ["PROCESSING", "OUT_FOR_DELIVERY"] };
-  } else {
-    const f = FILTERS.find((x) => x.key === filter);
-    if (f?.status) where.status = f.status;
-  }
-
-  if (q) {
-    const digits = q.replace(/\D/g, "");
-    const idLower = q.toLowerCase();
-    where.OR = [
-      { phone: { contains: digits || q } },
-      { customer: { name: { contains: q, mode: "insensitive" } } },
-      { id: { startsWith: idLower } },
-    ];
-  }
-
-  const dbOrders = await prisma.order.findMany({
-    where,
-    include: {
-      customer: true,
-      items: true,
-    },
-    orderBy: { createdAt: "desc" },
-    take: 100,
-  });
-
-  const orders: AdminOrder[] = dbOrders.map((o) => ({
-    id: o.id,
-    shortId: o.id.slice(0, 8).toUpperCase(),
-    status: o.status,
-    phone: o.phone,
-    customerName: o.customer.name,
-    address: o.address,
-    total: o.total,
-    createdAt: o.createdAt.toLocaleString("en-IN", {
-      day: "numeric",
-      month: "short",
-      hour: "numeric",
-      minute: "2-digit",
-      hour12: true,
-    }),
-    itemCount: o.items.length,
-    items: o.items.map((it) => ({
-      name: it.productName,
-      qty: it.qty,
-      unit:
-        it.quantityValue != null ? `${it.quantityValue} ${it.unit}` : it.unit,
-      price: it.price,
-    })),
-  }));
+  const orders = await fetchAdminOrders({ filter, q });
 
   return (
     <div className="px-4 py-4 flex flex-col gap-4">
@@ -90,26 +31,32 @@ export default async function AdminOrders({
         </div>
       </form>
 
-      <div className="flex gap-2 overflow-x-auto no-scrollbar -mx-1 px-1">
-        {FILTERS.map((f) => {
-          const active = filter === f.key;
-          const params = new URLSearchParams();
-          params.set("filter", f.key);
-          if (q) params.set("q", q);
-          return (
-            <Link
-              key={f.key}
-              href={`/admin/orders?${params.toString()}`}
-              className={`shrink-0 px-3 py-1.5 rounded-full text-[12px] font-semibold transition-colors ${
-                active
-                  ? "bg-emerald-500 text-white shadow-sm shadow-emerald-200"
-                  : "bg-white border border-gray-200 text-gray-600"
-              }`}
-            >
-              {f.label}
-            </Link>
-          );
-        })}
+      <div className="flex items-center justify-between gap-2">
+        <div className="flex gap-2 overflow-x-auto no-scrollbar -mx-1 px-1 flex-1">
+          {FILTERS.map((f) => {
+            const active = filter === f.key;
+            const params = new URLSearchParams();
+            params.set("filter", f.key);
+            if (q) params.set("q", q);
+            return (
+              <Link
+                key={f.key}
+                href={`/admin/orders?${params.toString()}`}
+                className={`shrink-0 px-3 py-1.5 rounded-full text-[12px] font-semibold transition-colors ${
+                  active
+                    ? "bg-emerald-500 text-white shadow-sm shadow-emerald-200"
+                    : "bg-white border border-gray-200 text-gray-600"
+                }`}
+              >
+                {f.label}
+              </Link>
+            );
+          })}
+        </div>
+        <span className="shrink-0 flex items-center gap-1.5 text-[11px] font-semibold text-emerald-600">
+          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+          Live
+        </span>
       </div>
 
       {q && (
@@ -118,15 +65,7 @@ export default async function AdminOrders({
         </p>
       )}
 
-      {orders.length === 0 ? (
-        <p className="text-center text-[13px] text-gray-400 py-12">No orders.</p>
-      ) : (
-        <div className="flex flex-col gap-3">
-          {orders.map((o) => (
-            <OrderRow key={o.id} order={o} />
-          ))}
-        </div>
-      )}
+      <OrdersList initialOrders={orders} filter={filter} q={q} />
     </div>
   );
 }

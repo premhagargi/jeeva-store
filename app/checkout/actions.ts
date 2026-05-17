@@ -3,6 +3,7 @@
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { getStorefrontSettings } from "@/lib/settings";
+import { sendOrderWhatsApp } from "@/lib/whatsapp";
 
 interface PlaceOrderInput {
   phone: string;
@@ -115,6 +116,28 @@ export async function placeOrder(input: PlaceOrderInput) {
     });
 
     return created;
+  });
+
+  await sendOrderWhatsApp({
+    orderId: order.id,
+    customerName: name,
+    customerPhone: phone,
+    address,
+    notes,
+    items: input.items.map((i) => {
+      const p = byId.get(i.productId)!;
+      const inv = p.inventory!;
+      return {
+        name: p.name,
+        qty: i.qty,
+        price: inv.price ?? 0,
+        unit: inv.unit,
+        quantityValue: inv.quantityValue,
+      };
+    }),
+    itemTotal,
+    deliveryFee,
+    total,
   });
 
   redirect(`/orders/${order.id}?placed=1`);
