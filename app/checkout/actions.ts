@@ -64,9 +64,33 @@ export async function placeOrder(input: PlaceOrderInput) {
 
   const order = await prisma.$transaction(async (tx) => {
     if (input.addressId) {
-      await tx.address.updateMany({
+      const owned = await tx.address.findFirst({
         where: { id: input.addressId, customerId: customer.id },
-        data: { phone },
+        select: { id: true },
+      });
+      if (!owned) {
+        throw new Error("Selected address is no longer available");
+      }
+    } else {
+      const [firstLine, ...restLines] = address
+        .split(/\r?\n/)
+        .map((s) => s.trim())
+        .filter(Boolean);
+      const line1 = firstLine || address;
+      const line2 = restLines.length > 0 ? restLines.join(", ") : null;
+
+      const existingCount = await tx.address.count({
+        where: { customerId: customer.id },
+      });
+      await tx.address.create({
+        data: {
+          customerId: customer.id,
+          phone,
+          fullName: name || null,
+          line1,
+          line2,
+          isDefault: existingCount === 0,
+        },
       });
     }
 
