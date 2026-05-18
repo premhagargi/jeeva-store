@@ -19,6 +19,7 @@ export default async function NewProductPage() {
         price: 0,
         stockQty: 100,
         isAvailable: true,
+        expiryDate: null,
       }}
     />
   );

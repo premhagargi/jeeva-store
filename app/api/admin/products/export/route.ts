@@ -26,6 +26,7 @@ export async function GET() {
     "price",
     "stockQty",
     "isAvailable",
+    "expiryDate",
     "imageUrl",
   ];
   const lines = [header.join(",")];
@@ -40,6 +41,7 @@ export async function GET() {
         p.inventory?.price ?? "",
         p.inventory?.stockQty ?? "",
         p.inventory?.isAvailable ? "1" : "0",
+        p.inventory?.expiryDate ? p.inventory.expiryDate.toISOString().slice(0, 10) : "",
         p.imageUrl ?? "",
       ]
         .map(csvCell)

@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Printer, MessageCircle, ArrowLeft } from "lucide-react";
 import { prisma } from "@/lib/prisma";
+import { formatDateTimeIST } from "@/lib/format-date";
 import AdminNotes from "./AdminNotes";
 
 export default async function OrderDetail({
@@ -37,7 +38,7 @@ export default async function OrderDetail({
               #{o.id.slice(0, 8).toUpperCase()}
             </p>
             <p className="text-[11px] text-gray-400">
-              {o.createdAt.toLocaleString("en-IN")}
+              {formatDateTimeIST(o.createdAt)}
             </p>
           </div>
           <div className="flex gap-1.5">
@@ -124,7 +125,7 @@ export default async function OrderDetail({
                     {ev.status.replace(/_/g, " ")}
                   </p>
                   <p className="text-[11px] text-gray-500">
-                    {ev.createdAt.toLocaleString("en-IN")}
+                    {formatDateTimeIST(ev.createdAt)}
                     {ev.admin && ` · ${ev.admin.displayName ?? ev.admin.username}`}
                   </p>
                   {ev.note && <p className="text-[11px] text-gray-600 mt-0.5">{ev.note}</p>}

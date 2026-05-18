@@ -41,6 +41,9 @@ export default async function EditProductPage({
           price: product.inventory.price ?? 0,
           stockQty: product.inventory.stockQty,
           isAvailable: product.inventory.isAvailable,
+          expiryDate: product.inventory.expiryDate
+            ? product.inventory.expiryDate.toISOString().slice(0, 10)
+            : null,
         }}
       />
       <div className="px-4">

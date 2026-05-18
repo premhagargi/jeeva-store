@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
+import { formatDateTimeIST } from "@/lib/format-date";
 import PrintTrigger from "./PrintTrigger";
 
 export default async function OrderPrintPage({
@@ -19,14 +20,7 @@ export default async function OrderPrintPage({
 
   if (!o) notFound();
 
-  const placedAt = o.createdAt.toLocaleString("en-IN", {
-    day: "numeric",
-    month: "short",
-    year: "numeric",
-    hour: "numeric",
-    minute: "2-digit",
-    hour12: true,
-  });
+  const placedAt = formatDateTimeIST(o.createdAt);
 
   return (
     <div className="bg-white min-h-screen text-gray-900 print:bg-white">

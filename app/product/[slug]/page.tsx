@@ -28,6 +28,16 @@ export default async function ProductPage({
     product.inventory.quantityValue != null
       ? `${product.inventory.quantityValue} ${product.inventory.unit}`
       : product.inventory.unit;
+  const expiry = product.inventory.expiryDate;
+  const expiryLabel = expiry
+    ? expiry.toLocaleDateString("en-IN", {
+        day: "numeric",
+        month: "short",
+        year: "numeric",
+        timeZone: "Asia/Kolkata",
+      })
+    : null;
+  const isExpired = expiry ? expiry.getTime() < Date.now() : false;
 
   return (
     <div className="min-h-screen bg-gray-50 pb-32">
@@ -70,6 +80,19 @@ export default async function ProductPage({
             <span className="text-[12px] font-semibold text-red-500">Out of stock</span>
           )}
         </div>
+
+        {expiryLabel && (
+          <div
+            className={`mt-3 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[12px] font-semibold ${
+              isExpired
+                ? "bg-red-50 text-red-600"
+                : "bg-amber-50 text-amber-700"
+            }`}
+          >
+            <span>{isExpired ? "Expired" : "Best before"}</span>
+            <span>{expiryLabel}</span>
+          </div>
+        )}
       </div>
 
       <div className="bg-white mt-2 px-4 py-5 border-t border-gray-100">

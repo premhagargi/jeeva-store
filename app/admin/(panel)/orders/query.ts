@@ -1,5 +1,6 @@
 import "server-only";
 import { prisma } from "@/lib/prisma";
+import { formatDateTimeIST } from "@/lib/format-date";
 import type { OrderStatus, Prisma } from "@prisma/client";
 import type { AdminOrder } from "./OrderRow";
 
@@ -52,13 +53,7 @@ export async function fetchAdminOrders({
     customerName: o.customerName ?? o.customer.name,
     address: o.address,
     total: o.total,
-    createdAt: o.createdAt.toLocaleString("en-IN", {
-      day: "numeric",
-      month: "short",
-      hour: "numeric",
-      minute: "2-digit",
-      hour12: true,
-    }),
+    createdAt: formatDateTimeIST(o.createdAt),
     itemCount: o.items.length,
     items: o.items.map((it) => ({
       name: it.productName,

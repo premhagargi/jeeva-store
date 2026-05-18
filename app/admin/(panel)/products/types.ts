@@ -6,4 +6,5 @@ export interface ProductInput {
   price: number;
   stockQty: number;
   isAvailable: boolean;
+  expiryDate: string | null;
 }

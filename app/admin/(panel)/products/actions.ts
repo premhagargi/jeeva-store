@@ -18,7 +18,17 @@ function validateInput(input: ProductInput): string | null {
   if (input.quantityValue != null && (!Number.isFinite(input.quantityValue) || input.quantityValue <= 0)) {
     return "Invalid quantity value";
   }
+  if (input.expiryDate != null && input.expiryDate.trim() !== "") {
+    const d = new Date(input.expiryDate);
+    if (Number.isNaN(d.getTime())) return "Invalid expiry date";
+  }
   return null;
+}
+
+function parseExpiry(v: string | null): Date | null {
+  if (!v || v.trim() === "") return null;
+  const d = new Date(v);
+  return Number.isNaN(d.getTime()) ? null : d;
 }
 
 async function upsertCategory(name: string) {
@@ -165,6 +175,7 @@ export async function createProduct(input: ProductInput) {
           price: input.price,
           stockQty: input.stockQty,
           isAvailable: input.isAvailable,
+          expiryDate: parseExpiry(input.expiryDate),
         },
       },
     },
@@ -211,6 +222,7 @@ export async function updateProduct(productId: string, input: ProductInput) {
         price: input.price,
         stockQty: input.stockQty,
         isAvailable: input.isAvailable,
+        expiryDate: parseExpiry(input.expiryDate),
       },
     }),
   ]);

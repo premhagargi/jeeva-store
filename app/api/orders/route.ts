@@ -18,21 +18,30 @@ export async function GET(request: Request) {
     CANCELLED: "cancelled",
   };
 
+  const TZ = "Asia/Kolkata";
+  const istDay = (d: Date) =>
+    d.toLocaleDateString("en-CA", { timeZone: TZ });
+
   function formatDate(d: Date): { date: string; time: string } {
     const now = new Date();
-    const sameDay = d.toDateString() === now.toDateString();
-    const yesterday = new Date(now);
-    yesterday.setDate(yesterday.getDate() - 1);
-    const isYesterday = d.toDateString() === yesterday.toDateString();
+    const todayKey = istDay(now);
+    const yKey = istDay(new Date(now.getTime() - 24 * 60 * 60 * 1000));
+    const dKey = istDay(d);
+
     const time = d.toLocaleTimeString("en-IN", {
       hour: "numeric",
       minute: "2-digit",
       hour12: true,
+      timeZone: TZ,
     });
-    if (sameDay) return { date: "Today", time };
-    if (isYesterday) return { date: "Yesterday", time };
+    if (dKey === todayKey) return { date: "Today", time };
+    if (dKey === yKey) return { date: "Yesterday", time };
     return {
-      date: d.toLocaleDateString("en-IN", { day: "numeric", month: "short" }),
+      date: d.toLocaleDateString("en-IN", {
+        day: "numeric",
+        month: "short",
+        timeZone: TZ,
+      }),
       time,
     };
   }

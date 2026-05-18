@@ -25,6 +25,7 @@ export default function ProductForm({ mode, productId, initial, categories }: Pr
   const [price, setPrice] = useState(String(initial.price));
   const [stockQty, setStockQty] = useState(String(initial.stockQty));
   const [isAvailable, setIsAvailable] = useState(initial.isAvailable);
+  const [expiryDate, setExpiryDate] = useState(initial.expiryDate ?? "");
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
 
@@ -42,6 +43,7 @@ export default function ProductForm({ mode, productId, initial, categories }: Pr
       price: Number(price),
       stockQty: Number(stockQty),
       isAvailable,
+      expiryDate: expiryDate.trim() === "" ? null : expiryDate,
     };
 
     startTransition(async () => {
@@ -144,6 +146,15 @@ export default function ProductForm({ mode, productId, initial, categories }: Pr
             />
           </Field>
         </div>
+
+        <Field label="Expiry date" hint="Leave blank if not applicable">
+          <input
+            type="date"
+            value={expiryDate}
+            onChange={(e) => setExpiryDate(e.target.value)}
+            className="bg-gray-50 border border-gray-100 rounded-xl px-3 py-2.5 text-[14px] outline-none focus:ring-2 focus:ring-emerald-200"
+          />
+        </Field>
 
         <label className="flex items-center justify-between bg-gray-50 rounded-xl px-3 py-2.5">
           <span className="text-[13px] font-semibold text-gray-700">Available for purchase</span>

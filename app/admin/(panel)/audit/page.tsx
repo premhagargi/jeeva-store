@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { formatDateTimeIST } from "@/lib/format-date";
 
 const PAGE_SIZE = 50;
 
@@ -76,7 +77,7 @@ export default async function AuditLogPage({
                   )}
                 </p>
                 <p className="text-[10px] text-gray-400 shrink-0">
-                  {log.createdAt.toLocaleString("en-IN")}
+                  {formatDateTimeIST(log.createdAt)}
                 </p>
               </div>
               <p className="text-[11px] text-gray-500 mt-0.5">

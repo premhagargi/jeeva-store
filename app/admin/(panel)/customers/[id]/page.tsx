@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
+import { formatDateTimeIST } from "@/lib/format-date";
 import CustomerEditor from "./CustomerEditor";
 
 export default async function CustomerDetail({
@@ -68,7 +69,7 @@ export default async function CustomerDetail({
                   #{o.id.slice(0, 8).toUpperCase()}
                 </p>
                 <p className="text-[11px] text-gray-500">
-                  {o.createdAt.toLocaleDateString("en-IN")} · {o.items.length} item{o.items.length === 1 ? "" : "s"}
+                  {formatDateTimeIST(o.createdAt)} · {o.items.length} item{o.items.length === 1 ? "" : "s"}
                 </p>
               </div>
               <div className="text-right">

@@ -70,6 +70,7 @@ export async function POST(req: NextRequest) {
   const iPrice = idx("price");
   const iStock = idx("stockqty");
   const iAvail = idx("isavailable");
+  const iExpiry = idx("expirydate");
 
   if (iName < 0 || iCategory < 0 || iUnit < 0) {
     return NextResponse.json(
@@ -92,6 +93,14 @@ export async function POST(req: NextRequest) {
     const price = iPrice >= 0 && row[iPrice]?.trim() ? Number(row[iPrice]) : 0;
     const stockQty = iStock >= 0 && row[iStock]?.trim() ? parseInt(row[iStock], 10) : 0;
     const isAvailable = iAvail >= 0 ? row[iAvail]?.trim() !== "0" : true;
+    let expiryDate: Date | null = null;
+    if (iExpiry >= 0) {
+      const raw = row[iExpiry]?.trim();
+      if (raw) {
+        const d = new Date(raw);
+        if (!Number.isNaN(d.getTime())) expiryDate = d;
+      }
+    }
 
     if (!name || !categoryName || !unit) {
       errors.push(`Row ${r + 1}: missing name/category/unit`);
@@ -113,7 +122,7 @@ export async function POST(req: NextRequest) {
             name,
             categoryId: category.id,
             inventory: {
-              update: { unit, quantityValue, price, stockQty, isAvailable },
+              update: { unit, quantityValue, price, stockQty, isAvailable, expiryDate },
             },
           },
         });
@@ -128,7 +137,7 @@ export async function POST(req: NextRequest) {
               name,
               categoryId: category.id,
               inventory: {
-                update: { unit, quantityValue, price, stockQty, isAvailable },
+                update: { unit, quantityValue, price, stockQty, isAvailable, expiryDate },
               },
             },
           });
@@ -140,7 +149,7 @@ export async function POST(req: NextRequest) {
               slug,
               categoryId: category.id,
               inventory: {
-                create: { unit, quantityValue, price, stockQty, isAvailable },
+                create: { unit, quantityValue, price, stockQty, isAvailable, expiryDate },
               },
             },
           });
