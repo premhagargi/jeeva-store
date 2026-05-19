@@ -35,6 +35,7 @@ import BottomNav from "./components/BottomNav";
 import Footer from "./components/Footer";
 import AnnouncementBanner from "./components/AnnouncementBanner";
 import ServiceWorkerRegistrar from "./components/ServiceWorkerRegistrar";
+import InstallPrompt from "./components/InstallPrompt";
 
 export default function RootLayout({
   children,
@@ -48,6 +49,7 @@ export default function RootLayout({
     >
       <body className="min-h-full flex flex-col font-sans">
         <ServiceWorkerRegistrar />
+        <InstallPrompt />
         <AnnouncementBanner />
         <Navbar />
         {children}
