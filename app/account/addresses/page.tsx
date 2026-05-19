@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
 import { ChevronLeft, MapPin, Plus, Trash2, Star, Edit2, X } from "lucide-react";
 import { getStoredPhone } from "@/lib/customer";
+import { clearCachedAddresses, setCachedAddresses } from "@/lib/address-cache";
 
 type Address = {
   id: string;
@@ -43,7 +44,9 @@ export default function AddressesPage() {
       const res = await fetch(`/api/addresses?phone=${encodeURIComponent(p)}`);
       if (res.ok) {
         const data = await res.json();
-        setAddresses(data.addresses ?? []);
+        const list = data.addresses ?? [];
+        setAddresses(list);
+        setCachedAddresses(p, list);
       }
     } finally {
       setLoading(false);
@@ -66,12 +69,18 @@ export default function AddressesPage() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ id, isDefault: true }),
     });
-    if (phone) load(phone);
+    if (phone) {
+      clearCachedAddresses(phone);
+      load(phone);
+    }
   }
 
   async function remove(id: string) {
     await fetch(`/api/addresses?id=${id}`, { method: "DELETE" });
-    if (phone) load(phone);
+    if (phone) {
+      clearCachedAddresses(phone);
+      load(phone);
+    }
   }
 
   return (

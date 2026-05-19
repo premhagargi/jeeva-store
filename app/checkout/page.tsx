@@ -11,6 +11,8 @@ import {
   setSelectedAddressId,
 } from "@/lib/customer";
 import { placeOrder } from "./actions";
+import { getCachedAddresses, setCachedAddresses, clearCachedAddresses } from "@/lib/address-cache";
+import { AddressListSkeleton } from "../components/cart/AddressSkeletons";
 
 type SavedAddress = {
   id: string;
@@ -44,6 +46,7 @@ export default function CheckoutPage() {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [useManual, setUseManual] = useState(false);
   const [placingSnapshot, setPlacingSnapshot] = useState<{ total: number; count: number } | null>(null);
+  const [addressesLoading, setAddressesLoading] = useState(false);
 
   useEffect(() => {
     const stored = getStoredPhone();
@@ -54,8 +57,33 @@ export default function CheckoutPage() {
     const p = phone.trim();
     if (!p) {
       setSavedAddresses([]);
+      setAddressesLoading(false);
       return;
     }
+
+    const applyList = (list: SavedAddress[]) => {
+      setSavedAddresses(list);
+      if (list.length > 0 && !selectedId && !useManual) {
+        const storedId = getSelectedAddressId();
+        const stored = storedId ? list.find((a) => a.id === storedId) : null;
+        const oldest = [...list].sort(
+          (a, b) =>
+            new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
+        )[0];
+        const initial = stored ?? oldest ?? list[0];
+        setSelectedId(initial.id);
+        setAddress(formatAddress(initial));
+        if (initial.fullName && !name) setName(initial.fullName);
+      }
+    };
+
+    const cached = getCachedAddresses(p);
+    if (cached) {
+      applyList(cached);
+    } else {
+      setAddressesLoading(true);
+    }
+
     let cancelled = false;
     (async () => {
       try {
@@ -71,21 +99,12 @@ export default function CheckoutPage() {
         if (aRes.ok) {
           const data = await aRes.json();
           const list: SavedAddress[] = data.addresses ?? [];
-          setSavedAddresses(list);
-          if (list.length > 0 && !selectedId && !useManual) {
-            const storedId = getSelectedAddressId();
-            const stored = storedId ? list.find((a) => a.id === storedId) : null;
-            const oldest = [...list].sort(
-              (a, b) =>
-                new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
-            )[0];
-            const initial = stored ?? oldest ?? list[0];
-            setSelectedId(initial.id);
-            setAddress(formatAddress(initial));
-            if (initial.fullName && !name) setName(initial.fullName);
-          }
+          setCachedAddresses(p, list);
+          applyList(list);
         }
-      } catch {}
+      } catch {} finally {
+        if (!cancelled) setAddressesLoading(false);
+      }
     })();
     return () => { cancelled = true; };
   }, [phone]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -158,9 +177,11 @@ export default function CheckoutPage() {
           })),
         });
         clearCart();
+        if (useManual) clearCachedAddresses(p);
       } catch (err: any) {
         if (err?.digest?.startsWith?.("NEXT_REDIRECT")) {
           clearCart();
+          if (useManual) clearCachedAddresses(p);
           throw err;
         }
         setPlacingSnapshot(null);
@@ -216,7 +237,9 @@ export default function CheckoutPage() {
             )}
           </div>
 
-          {showAddressList ? (
+          {phone.trim() && addressesLoading && savedAddresses.length === 0 ? (
+            <AddressListSkeleton count={2} />
+          ) : showAddressList ? (
             <div className="flex flex-col gap-2">
               {(() => {
                 const lastUsedId =

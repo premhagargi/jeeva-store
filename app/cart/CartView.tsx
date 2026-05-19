@@ -5,8 +5,10 @@ import Link from "next/link";
 import { ShoppingCart, ChevronRight, MapPin, AlertCircle, Check, Plus, X } from "lucide-react";
 import CartItemRow from "../components/cart/CartItemRow";
 import CartSkeleton from "../components/cart/CartSkeleton";
+import { AddressCardSkeleton } from "../components/cart/AddressSkeletons";
 import { useCart, increment, decrement } from "@/lib/cart";
 import { getStoredPhone, getSelectedAddressId, setSelectedAddressId } from "@/lib/customer";
+import { getCachedAddresses, setCachedAddresses } from "@/lib/address-cache";
 
 interface CartViewProps {
   minOrderValue: number;
@@ -48,31 +50,47 @@ export default function CartView({
   const [selectedId, setSelectedIdState] = useState<string | null>(null);
   const [picking, setPicking] = useState(false);
   const [phone, setPhone] = useState<string | null>(null);
+  const [addressesLoading, setAddressesLoading] = useState(false);
 
   useEffect(() => {
     setHydrated(true);
     const p = getStoredPhone();
     setPhone(p);
     if (!p) return;
+
+    const applyList = (list: SavedAddress[]) => {
+      setAddresses(list);
+      const stored = getSelectedAddressId();
+      const valid = stored && list.find((a) => a.id === stored);
+      if (valid) {
+        setSelectedIdState(stored);
+      } else {
+        const oldest = pickOldest(list);
+        if (oldest) {
+          setSelectedIdState(oldest.id);
+          setSelectedAddressId(oldest.id);
+        }
+      }
+    };
+
+    const cached = getCachedAddresses(p);
+    if (cached) {
+      applyList(cached);
+    } else {
+      setAddressesLoading(true);
+    }
+
     (async () => {
       try {
         const res = await fetch(`/api/addresses?phone=${encodeURIComponent(p)}`);
         if (!res.ok) return;
         const data = await res.json();
         const list: SavedAddress[] = data.addresses ?? [];
-        setAddresses(list);
-        const stored = getSelectedAddressId();
-        const valid = stored && list.find((a) => a.id === stored);
-        if (valid) {
-          setSelectedIdState(stored);
-        } else {
-          const oldest = pickOldest(list);
-          if (oldest) {
-            setSelectedIdState(oldest.id);
-            setSelectedAddressId(oldest.id);
-          }
-        }
-      } catch {}
+        setCachedAddresses(p, list);
+        applyList(list);
+      } catch {} finally {
+        setAddressesLoading(false);
+      }
     })();
   }, []);
 
@@ -131,12 +149,16 @@ export default function CartView({
       </div>
 
       <div className="px-4 py-4 flex flex-col gap-4">
-        <AddressCard
-          phone={phone}
-          selected={selected}
-          hasAddresses={addresses.length > 0}
-          onChange={() => setPicking(true)}
-        />
+        {phone && addressesLoading && addresses.length === 0 ? (
+          <AddressCardSkeleton />
+        ) : (
+          <AddressCard
+            phone={phone}
+            selected={selected}
+            hasAddresses={addresses.length > 0}
+            onChange={() => setPicking(true)}
+          />
+        )}
 
         {!storeOpen && (
           <div className="bg-red-50 border border-red-200 rounded-2xl px-4 py-3 flex items-start gap-2.5">
