@@ -34,12 +34,18 @@ export default function NotificationToggle() {
         if (!cancelled) setState("denied");
         return;
       }
+      if (!cancelled) setState("off");
       try {
-        const reg = await navigator.serviceWorker.ready;
+        const readyWithTimeout = Promise.race([
+          navigator.serviceWorker.ready,
+          new Promise<null>((resolve) => setTimeout(() => resolve(null), 4000)),
+        ]);
+        const reg = await readyWithTimeout;
+        if (!reg) return;
         const sub = await reg.pushManager.getSubscription();
-        if (!cancelled) setState(sub ? "on" : "off");
-      } catch {
-        if (!cancelled) setState("off");
+        if (!cancelled && sub) setState("on");
+      } catch (err) {
+        console.warn("[push] init check failed", err);
       }
     }
     init();
@@ -56,7 +62,14 @@ export default function NotificationToggle() {
         setState(permission === "denied" ? "denied" : "off");
         return;
       }
-      const reg = await navigator.serviceWorker.ready;
+      const reg = await Promise.race([
+        navigator.serviceWorker.ready,
+        new Promise<null>((resolve) => setTimeout(() => resolve(null), 6000)),
+      ]);
+      if (!reg) {
+        alert("Service worker not active. Try a hard refresh, or check that you're on a production build (npm run build && start).");
+        return;
+      }
       const vapid = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
       if (!vapid) {
         alert("Push not configured (missing VAPID public key).");
