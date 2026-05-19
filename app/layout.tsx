@@ -34,6 +34,7 @@ import Navbar from "./components/navbar";
 import BottomNav from "./components/BottomNav";
 import Footer from "./components/Footer";
 import AnnouncementBanner from "./components/AnnouncementBanner";
+import ServiceWorkerRegistrar from "./components/ServiceWorkerRegistrar";
 
 export default function RootLayout({
   children,
@@ -46,6 +47,7 @@ export default function RootLayout({
       className={`${inter.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col font-sans">
+        <ServiceWorkerRegistrar />
         <AnnouncementBanner />
         <Navbar />
         {children}
