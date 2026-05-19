@@ -3,6 +3,7 @@ import { unstable_cache } from "next/cache";
 import { getAdminSession, logoutAdmin } from "@/lib/admin-auth";
 import { prisma } from "@/lib/prisma";
 import AdminNav from "./AdminNav";
+import NotificationToggle from "./NotificationToggle";
 import Link from "next/link";
 
 async function logout() {
@@ -35,6 +36,7 @@ export default async function AdminPanelLayout({
             Jeeva Admin
           </Link>
           <div className="flex items-center gap-3">
+            <NotificationToggle />
             <span className="text-[11px] font-semibold text-gray-500">
               {session.displayName ?? session.username}
             </span>

@@ -131,15 +131,29 @@ model OrderStatusEvent {
 }
 
 model Admin {
-  id           String    @id @default(uuid())
-  username     String    @unique
-  passwordHash String
-  displayName  String?
-  isActive     Boolean   @default(true)
-  createdAt    DateTime  @default(now())
-  updatedAt    DateTime  @updatedAt
-  auditLogs    AuditLog[]
-  statusEvents OrderStatusEvent[]
+  id            String    @id @default(uuid())
+  username      String    @unique
+  passwordHash  String
+  displayName   String?
+  isActive      Boolean   @default(true)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  auditLogs     AuditLog[]
+  statusEvents  OrderStatusEvent[]
+  subscriptions AdminPushSubscription[]
+}
+
+model AdminPushSubscription {
+  id        String   @id @default(uuid())
+  adminId   String
+  admin     Admin    @relation(fields: [adminId], references: [id], onDelete: Cascade)
+  endpoint  String   @unique
+  p256dh    String
+  auth      String
+  userAgent String?
+  createdAt DateTime @default(now())
+
+  @@index([adminId])
 }
 
 model AuditLog {

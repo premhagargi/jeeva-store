@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { getStorefrontSettings } from "@/lib/settings";
 import { sendOrderWhatsApp } from "@/lib/whatsapp";
+import { sendNewOrderPush } from "@/lib/push";
 
 interface PlaceOrderInput {
   phone: string;
@@ -142,6 +143,13 @@ export async function placeOrder(input: PlaceOrderInput) {
 
     return created;
   });
+
+  sendNewOrderPush({
+    orderId: order.id,
+    customerName: name || customer.name,
+    total,
+    itemCount: input.items.reduce((s, i) => s + i.qty, 0),
+  }).catch((err) => console.error("[push] order notify failed", err));
 
   await sendOrderWhatsApp({
     orderId: order.id,
