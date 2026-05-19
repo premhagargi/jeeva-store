@@ -62,14 +62,25 @@ export default function NotificationToggle() {
         setState(permission === "denied" ? "denied" : "off");
         return;
       }
-      const reg = await Promise.race([
-        navigator.serviceWorker.ready,
-        new Promise<null>((resolve) => setTimeout(() => resolve(null), 6000)),
-      ]);
+      let reg = await navigator.serviceWorker.getRegistration();
       if (!reg) {
-        alert("Service worker not active. Try a hard refresh, or check that you're on a production build (npm run build && start).");
+        try {
+          reg = await navigator.serviceWorker.register("/sw.js", { scope: "/" });
+        } catch (err) {
+          console.error("[push] SW register failed", err);
+          alert("Could not register service worker. See console for details.");
+          return;
+        }
+      }
+      const activeReg = await Promise.race([
+        navigator.serviceWorker.ready,
+        new Promise<null>((resolve) => setTimeout(() => resolve(null), 10000)),
+      ]);
+      if (!activeReg) {
+        alert("Service worker took too long to activate. Reload the page and try again.");
         return;
       }
+      reg = activeReg;
       const vapid = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
       if (!vapid) {
         alert("Push not configured (missing VAPID public key).");
