@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { unstable_cache } from "next/cache";
 import { getAdminSession, logoutAdmin } from "@/lib/admin-auth";
@@ -5,6 +6,16 @@ import { prisma } from "@/lib/prisma";
 import AdminNav from "./AdminNav";
 import NotificationToggle from "./NotificationToggle";
 import Link from "next/link";
+
+export const metadata: Metadata = {
+  title: "Jeeva Admin",
+  manifest: "/manifest-admin.json",
+  appleWebApp: {
+    capable: true,
+    title: "Jeeva Admin",
+    statusBarStyle: "default",
+  },
+};
 
 async function logout() {
   "use server";
