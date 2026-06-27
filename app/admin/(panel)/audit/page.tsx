@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { formatDateTimeIST } from "@/lib/format-date";
 
@@ -30,16 +31,16 @@ export default async function AuditLogPage({
   return (
     <div className="px-4 py-4 flex flex-col gap-3">
       <div className="flex gap-2 overflow-x-auto no-scrollbar">
-        <a
+        <Link
           href="/admin/audit"
           className={`shrink-0 px-3 py-1.5 rounded-full text-[12px] font-semibold ${
             !entity ? "bg-emerald-500 text-white" : "bg-white border border-gray-200 text-gray-600"
           }`}
         >
           All
-        </a>
+        </Link>
         {entities.map((e) => (
-          <a
+          <Link
             key={e.entity}
             href={`/admin/audit?entity=${e.entity}`}
             className={`shrink-0 px-3 py-1.5 rounded-full text-[12px] font-semibold ${
@@ -49,7 +50,7 @@ export default async function AuditLogPage({
             }`}
           >
             {e.entity}
-          </a>
+          </Link>
         ))}
       </div>
 
@@ -92,12 +93,12 @@ export default async function AuditLogPage({
       {totalPages > 1 && (
         <div className="flex items-center justify-between mt-2">
           {page > 1 ? (
-            <a
+            <Link
               href={`/admin/audit?page=${page - 1}${entity ? `&entity=${entity}` : ""}`}
               className="text-[12px] font-semibold text-emerald-600 px-3 py-1.5 rounded-lg bg-emerald-50"
             >
               Prev
-            </a>
+            </Link>
           ) : (
             <span />
           )}
@@ -105,12 +106,12 @@ export default async function AuditLogPage({
             Page {page} / {totalPages}
           </span>
           {page < totalPages ? (
-            <a
+            <Link
               href={`/admin/audit?page=${page + 1}${entity ? `&entity=${entity}` : ""}`}
               className="text-[12px] font-semibold text-emerald-600 px-3 py-1.5 rounded-lg bg-emerald-50"
             >
               Next
-            </a>
+            </Link>
           ) : (
             <span />
           )}

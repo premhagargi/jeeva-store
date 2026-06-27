@@ -59,14 +59,14 @@ export default async function CustomersPage({
           {flagged && <input type="hidden" name="flagged" value="1" />}
         </div>
         <div className="flex items-center gap-2">
-          <a
+          <Link
             href={flagged ? "/admin/customers" : "/admin/customers?flagged=1"}
             className={`text-[12px] font-semibold px-3 py-1.5 rounded-full ${
               flagged ? "bg-red-500 text-white" : "bg-white border border-gray-200 text-gray-600"
             }`}
           >
             {flagged ? "Flagged ✕" : "Flagged only"}
-          </a>
+          </Link>
           <span className="text-[12px] text-gray-400">
             {total} customer{total === 1 ? "" : "s"}
           </span>
@@ -149,11 +149,11 @@ function PageLink({
   if (flagged) params.set("flagged", "1");
   if (page > 1) params.set("page", String(page));
   return (
-    <a
+    <Link
       href={`/admin/customers${params.toString() ? `?${params.toString()}` : ""}`}
       className="text-[12px] font-semibold text-emerald-600 px-3 py-1.5 rounded-lg bg-emerald-50"
     >
       {label}
-    </a>
+    </Link>
   );
 }

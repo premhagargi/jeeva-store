@@ -1,5 +1,6 @@
 "use client";
 
+import { memo } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { Plus, Minus } from "lucide-react";
@@ -19,9 +20,56 @@ export interface ProductCardData {
   isAvailable: boolean;
 }
 
-export default function ProductCard({ product }: { product: ProductCardData }) {
+// Isolated cart-reading component — only this re-renders when cart changes
+function CartButton({ product }: { product: ProductCardData }) {
   const cart = useCart();
   const qty = cart.find((l) => l.productId === product.id)?.qty ?? 0;
+
+  if (qty === 0) {
+    return (
+      <button
+        disabled={!product.isAvailable}
+        onClick={() =>
+          addToCart({
+            productId: product.id,
+            slug: product.slug,
+            name: product.name,
+            unit: product.unit,
+            quantityValue: product.quantityValue,
+            price: product.price,
+            emoji: product.emoji,
+            bg: product.bg,
+            imageUrl: product.imageUrl,
+          })
+        }
+        className="text-[12px] font-bold text-emerald-600 border border-emerald-200 bg-emerald-50 px-3 py-1.5 rounded-lg active:scale-95 transition-transform disabled:opacity-50 disabled:cursor-not-allowed"
+      >
+        ADD
+      </button>
+    );
+  }
+
+  return (
+    <div className="flex items-center gap-1">
+      <button
+        onClick={() => decrement(product.id)}
+        className="w-7 h-7 rounded-lg bg-emerald-50 border border-emerald-200 flex items-center justify-center text-emerald-600 active:scale-90 transition-transform"
+      >
+        <Minus size={12} />
+      </button>
+      <span className="w-5 text-center text-[12px] font-bold text-gray-800">{qty}</span>
+      <button
+        onClick={() => increment(product.id)}
+        className="w-7 h-7 rounded-lg bg-emerald-500 flex items-center justify-center text-white active:scale-90 transition-transform"
+      >
+        <Plus size={12} />
+      </button>
+    </div>
+  );
+}
+
+// memo: only re-renders when product prop changes, not on cart updates
+const ProductCard = memo(function ProductCard({ product }: { product: ProductCardData }) {
   const qtyLabel =
     product.quantityValue != null ? `${product.quantityValue} ${product.unit}` : product.unit;
 
@@ -55,45 +103,10 @@ export default function ProductCard({ product }: { product: ProductCardData }) {
 
       <div className="flex items-center justify-between mt-2 px-2.5 pb-2.5">
         <span className="text-[14px] font-bold text-gray-900">₹{product.price}</span>
-
-        {qty === 0 ? (
-          <button
-            disabled={!product.isAvailable}
-            onClick={() =>
-              addToCart({
-                productId: product.id,
-                slug: product.slug,
-                name: product.name,
-                unit: product.unit,
-                quantityValue: product.quantityValue,
-                price: product.price,
-                emoji: product.emoji,
-                bg: product.bg,
-                imageUrl: product.imageUrl,
-              })
-            }
-            className="text-[12px] font-bold text-emerald-600 border border-emerald-200 bg-emerald-50 px-3 py-1.5 rounded-lg active:scale-95 transition-transform disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            ADD
-          </button>
-        ) : (
-          <div className="flex items-center gap-1">
-            <button
-              onClick={() => decrement(product.id)}
-              className="w-7 h-7 rounded-lg bg-emerald-50 border border-emerald-200 flex items-center justify-center text-emerald-600 active:scale-90 transition-transform"
-            >
-              <Minus size={12} />
-            </button>
-            <span className="w-5 text-center text-[12px] font-bold text-gray-800">{qty}</span>
-            <button
-              onClick={() => increment(product.id)}
-              className="w-7 h-7 rounded-lg bg-emerald-500 flex items-center justify-center text-white active:scale-90 transition-transform"
-            >
-              <Plus size={12} />
-            </button>
-          </div>
-        )}
+        <CartButton product={product} />
       </div>
     </div>
   );
-}
+});
+
+export default ProductCard;

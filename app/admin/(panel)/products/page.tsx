@@ -7,35 +7,6 @@ import SearchBar from "./SearchBar";
 
 const PAGE_SIZE = 50;
 
-function normalize(s: string): string {
-  return s
-    .toLowerCase()
-    .normalize("NFKD")
-    .replace(/[̀-ͯ]/g, "")
-    .replace(/[^a-z0-9]+/g, " ")
-    .trim();
-}
-
-function levenshtein(a: string, b: string): number {
-  if (a === b) return 0;
-  if (!a.length) return b.length;
-  if (!b.length) return a.length;
-  const m = a.length;
-  const n = b.length;
-  let prev = new Array(n + 1);
-  let curr = new Array(n + 1);
-  for (let j = 0; j <= n; j++) prev[j] = j;
-  for (let i = 1; i <= m; i++) {
-    curr[0] = i;
-    for (let j = 1; j <= n; j++) {
-      const cost = a.charCodeAt(i - 1) === b.charCodeAt(j - 1) ? 0 : 1;
-      curr[j] = Math.min(curr[j - 1] + 1, prev[j] + 1, prev[j - 1] + cost);
-    }
-    [prev, curr] = [curr, prev];
-  }
-  return prev[n];
-}
-
 export default async function AdminProducts({
   searchParams,
 }: {
@@ -52,124 +23,47 @@ export default async function AdminProducts({
   const page = Math.max(1, parseInt(sp.page ?? "1", 10) || 1);
   const lowStock = sp.lowStock === "1";
 
-  const nq = normalize(q);
-  const hasQuery = nq.length > 0;
-
-  const baseWhere: any = {};
+  const baseWhere: Parameters<typeof prisma.product.findMany>[0]["where"] = {};
   if (lowStock) {
     baseWhere.inventory = { stockQty: { lt: 10 } };
   }
 
-  let products: AdminProduct[] = [];
-  let total = 0;
-  let totalPages = 1;
+  const where = q
+    ? {
+        ...baseWhere,
+        OR: [
+          { name: { contains: q, mode: "insensitive" as const } },
+          { category: { name: { contains: q, mode: "insensitive" as const } } },
+        ],
+      }
+    : baseWhere;
 
-  if (hasQuery) {
-    const rows = await prisma.product.findMany({
-      where: baseWhere,
+  const [rows, total] = await Promise.all([
+    prisma.product.findMany({
+      where,
       include: { inventory: true, category: true },
-      take: 2000,
-    });
+      orderBy: { name: "asc" },
+      take: PAGE_SIZE,
+      skip: (page - 1) * PAGE_SIZE,
+    }),
+    prisma.product.count({ where }),
+  ]);
 
-    const qTokens = nq.split(/\s+/).filter(Boolean);
-    const nqCompact = nq.replace(/\s+/g, "");
+  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
 
-    const scored = rows
-      .filter((p) => p.inventory)
-      .map((p) => {
-        const name = normalize(p.name);
-        const nameCompact = name.replace(/\s+/g, "");
-        const nameTokens = name.split(/\s+/).filter(Boolean);
-        const cat = normalize(p.category.name);
-
-        let score = 0;
-        if (name === nq) score += 1000;
-        else if (name.startsWith(nq)) score += 600;
-        else if (nameCompact === nqCompact) score += 700;
-        else if (nameCompact.startsWith(nqCompact)) score += 450;
-        else if (nameCompact.includes(nqCompact) && nqCompact.length >= 3) score += 220;
-
-        for (const t of qTokens) {
-          if (nameTokens.includes(t)) {
-            score += 120;
-            continue;
-          }
-          if (nameTokens.some((w) => w.startsWith(t))) {
-            score += 80;
-            continue;
-          }
-          if (name.includes(t)) {
-            score += 40;
-            continue;
-          }
-          let bestDist = Infinity;
-          let bestLen = 0;
-          for (const w of nameTokens) {
-            if (Math.abs(w.length - t.length) > 2) continue;
-            const d = levenshtein(w, t);
-            if (d < bestDist) {
-              bestDist = d;
-              bestLen = w.length;
-            }
-          }
-          if (bestDist === 1 && t.length >= 3) {
-            score += 50;
-            continue;
-          }
-          if (bestDist === 2 && t.length >= 5 && bestLen >= 5) {
-            score += 20;
-            continue;
-          }
-          if (cat.includes(t)) score += 25;
-        }
-
-        return { score, p };
-      })
-      .filter((s) => s.score > 0)
-      .sort((a, b) => b.score - a.score || a.p.name.localeCompare(b.p.name));
-
-    total = scored.length;
-    totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
-    products = scored
-      .slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE)
-      .map(({ p }) => ({
-        id: p.id,
-        name: p.name,
-        category: p.category.name,
-        unit: p.inventory!.unit,
-        quantityValue: p.inventory!.quantityValue,
-        price: p.inventory!.price ?? 0,
-        stockQty: p.inventory!.stockQty,
-        isAvailable: p.inventory!.isAvailable,
-        imageUrl: p.imageUrl,
-      }));
-  } else {
-    const [rows, count] = await Promise.all([
-      prisma.product.findMany({
-        where: baseWhere,
-        include: { inventory: true, category: true },
-        orderBy: { name: "asc" },
-        take: PAGE_SIZE,
-        skip: (page - 1) * PAGE_SIZE,
-      }),
-      prisma.product.count({ where: baseWhere }),
-    ]);
-    total = count;
-    totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
-    products = rows
-      .filter((p) => p.inventory)
-      .map((p) => ({
-        id: p.id,
-        name: p.name,
-        category: p.category.name,
-        unit: p.inventory!.unit,
-        quantityValue: p.inventory!.quantityValue,
-        price: p.inventory!.price ?? 0,
-        stockQty: p.inventory!.stockQty,
-        isAvailable: p.inventory!.isAvailable,
-        imageUrl: p.imageUrl,
-      }));
-  }
+  const products: AdminProduct[] = rows
+    .filter((p) => p.inventory)
+    .map((p) => ({
+      id: p.id,
+      name: p.name,
+      category: p.category.name,
+      unit: p.inventory!.unit,
+      quantityValue: p.inventory!.quantityValue,
+      price: p.inventory!.price ?? 0,
+      stockQty: p.inventory!.stockQty,
+      isAvailable: p.inventory!.isAvailable,
+      imageUrl: p.imageUrl,
+    }));
 
   return (
     <div className="px-4 py-4 flex flex-col gap-4">
@@ -239,11 +133,11 @@ function PageLink({
   if (lowStock) params.set("lowStock", "1");
   if (page > 1) params.set("page", String(page));
   return (
-    <a
+    <Link
       href={`/admin/products${params.toString() ? `?${params.toString()}` : ""}`}
       className="text-[12px] font-semibold text-emerald-600 px-3 py-1.5 rounded-lg bg-emerald-50"
     >
       {label}
-    </a>
+    </Link>
   );
 }
