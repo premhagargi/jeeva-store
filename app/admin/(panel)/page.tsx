@@ -19,6 +19,7 @@ export default async function AdminDashboard() {
     lowStock,
     weekOrders,
     topItems,
+    stockInventory,
   ] = await Promise.all([
     prisma.product.count(),
     prisma.category.count(),
@@ -46,7 +47,16 @@ export default async function AdminDashboard() {
       take: 5,
       where: { order: { createdAt: { gte: sevenDaysAgo } } },
     }),
+    prisma.inventory.findMany({
+      where: { price: { not: null } },
+      select: { price: true, stockQty: true },
+    }),
   ]);
+
+  const totalStockWorth = stockInventory.reduce(
+    (sum, inv) => sum + (inv.price ?? 0) * inv.stockQty,
+    0,
+  );
 
   const stats = [
     { label: "Orders today", value: ordersToday, color: "bg-emerald-50 text-emerald-700" },
@@ -92,6 +102,21 @@ export default async function AdminDashboard() {
           </div>
         ))}
       </div>
+
+      <Link
+        href="/admin/stock-value"
+        className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 flex items-center justify-between active:bg-gray-50"
+      >
+        <div>
+          <p className="text-[11px] font-semibold uppercase tracking-widest text-gray-400">
+            Total stock worth
+          </p>
+          <p className="text-[20px] font-bold mt-1 inline-block px-2 py-0.5 rounded-lg bg-teal-50 text-teal-700">
+            ₹{totalStockWorth.toLocaleString("en-IN", { maximumFractionDigits: 0 })}
+          </p>
+        </div>
+        <span className="text-gray-300 text-2xl">›</span>
+      </Link>
 
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4">
         <p className="text-[14px] font-bold text-gray-900">Revenue last 7 days</p>
@@ -173,6 +198,30 @@ export default async function AdminDashboard() {
         >
           → Manage products
         </Link>
+      </div>
+
+      <div className="flex flex-col gap-2">
+        <p className="text-[11px] font-bold uppercase tracking-widest text-gray-400 px-1">
+          Create bill
+        </p>
+        <div className="grid grid-cols-2 gap-3">
+          <Link
+            href="/admin/bill/new?type=walkin"
+            className="bg-emerald-50 border border-emerald-100 rounded-2xl px-4 py-4 flex flex-col gap-1 active:bg-emerald-100"
+          >
+            <span className="text-2xl">🏪</span>
+            <span className="text-[14px] font-bold text-emerald-800">Walk-in</span>
+            <span className="text-[11px] text-emerald-600">In-store customer</span>
+          </Link>
+          <Link
+            href="/admin/bill/new?type=online"
+            className="bg-blue-50 border border-blue-100 rounded-2xl px-4 py-4 flex flex-col gap-1 active:bg-blue-100"
+          >
+            <span className="text-2xl">📱</span>
+            <span className="text-[14px] font-bold text-blue-800">Online</span>
+            <span className="text-[11px] text-blue-600">Delivery order</span>
+          </Link>
+        </div>
       </div>
     </div>
   );

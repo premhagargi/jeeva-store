@@ -170,15 +170,13 @@ export default function OrderRow({ order }: { order: AdminOrder }) {
           <>
             <button
               onClick={() => changeStatus("OUT_FOR_DELIVERY")}
-              disabled={pending}
-              className="w-full bg-blue-500 text-white font-bold text-[14px] py-3 rounded-xl flex items-center justify-center gap-2 active:scale-[0.98] transition-transform disabled:opacity-60"
+              className="w-full bg-blue-500 text-white font-bold text-[14px] py-3 rounded-xl flex items-center justify-center gap-2 active:scale-[0.98] transition-transform"
             >
               <Truck size={16} />
               Mark Dispatched
             </button>
             <button
               onClick={() => changeStatus("CANCELLED", true)}
-              disabled={pending}
               className="text-[12px] font-semibold text-red-500 py-1.5 active:opacity-70"
             >
               Cancel order
@@ -190,15 +188,13 @@ export default function OrderRow({ order }: { order: AdminOrder }) {
           <>
             <button
               onClick={() => changeStatus("DELIVERED")}
-              disabled={pending}
-              className="w-full bg-emerald-500 text-white font-bold text-[14px] py-3 rounded-xl flex items-center justify-center gap-2 active:scale-[0.98] transition-transform disabled:opacity-60"
+              className="w-full bg-emerald-500 text-white font-bold text-[14px] py-3 rounded-xl flex items-center justify-center gap-2 active:scale-[0.98] transition-transform"
             >
               <Check size={16} />
               Mark Delivered
             </button>
             <button
               onClick={() => changeStatus("PROCESSING")}
-              disabled={pending}
               className="text-[12px] font-semibold text-gray-500 py-1.5 active:opacity-70"
             >
               ← Back to processing
