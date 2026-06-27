@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import Link from "next/link";
 import { Truck, Check, X, Phone, MapPin, ChevronDown, ChevronUp, Printer, MessageCircle } from "lucide-react";
 import { updateOrderStatus } from "./actions";
 import type { OrderStatus } from "@prisma/client";
@@ -70,7 +71,7 @@ export default function OrderRow({ order }: { order: AdminOrder }) {
       <div className="px-4 pt-4 pb-3 flex items-start justify-between gap-2">
         <div className="min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
-            <a href={`/admin/orders/${order.id}`} className="text-[13px] font-bold text-gray-900 hover:text-emerald-600">#{order.shortId}</a>
+            <Link href={`/admin/orders/${order.id}`} className="text-[13px] font-bold text-gray-900 hover:text-emerald-600">#{order.shortId}</Link>
             <span className={`text-[11px] font-bold px-2 py-0.5 rounded-full ${style.bg} ${style.text}`}>
               {style.label}
             </span>
