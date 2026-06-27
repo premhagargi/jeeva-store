@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
+import CreateBillBar from "./CreateBillBar";
 
 export default async function AdminDashboard() {
   const now = new Date();
@@ -89,7 +90,7 @@ export default async function AdminDashboard() {
   const maxTotal = Math.max(1, ...buckets.map((b) => b.total));
 
   return (
-    <div className="px-4 py-4 flex flex-col gap-4">
+    <div className="px-4 py-4 pb-24 flex flex-col gap-4">
       <div className="grid grid-cols-2 gap-3">
         {stats.map((s) => (
           <div key={s.label} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4">
@@ -200,29 +201,7 @@ export default async function AdminDashboard() {
         </Link>
       </div>
 
-      <div className="flex flex-col gap-2">
-        <p className="text-[11px] font-bold uppercase tracking-widest text-gray-400 px-1">
-          Create bill
-        </p>
-        <div className="grid grid-cols-2 gap-3">
-          <Link
-            href="/admin/bill/new?type=walkin"
-            className="bg-emerald-50 border border-emerald-100 rounded-2xl px-4 py-4 flex flex-col gap-1 active:bg-emerald-100"
-          >
-            <span className="text-2xl">🏪</span>
-            <span className="text-[14px] font-bold text-emerald-800">Walk-in</span>
-            <span className="text-[11px] text-emerald-600">In-store customer</span>
-          </Link>
-          <Link
-            href="/admin/bill/new?type=online"
-            className="bg-blue-50 border border-blue-100 rounded-2xl px-4 py-4 flex flex-col gap-1 active:bg-blue-100"
-          >
-            <span className="text-2xl">📱</span>
-            <span className="text-[14px] font-bold text-blue-800">Online</span>
-            <span className="text-[11px] text-blue-600">Delivery order</span>
-          </Link>
-        </div>
-      </div>
+      <CreateBillBar />
     </div>
   );
 }

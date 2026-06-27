@@ -1,8 +1,20 @@
 import Link from "next/link";
+import { unstable_cache } from "next/cache";
 import { ChevronLeft } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { getStorefrontSettings } from "@/lib/settings";
 import BillForm from "./BillForm";
+
+const getBillProducts = unstable_cache(
+  () =>
+    prisma.product.findMany({
+      where: { inventory: { isNot: null } },
+      include: { inventory: true, category: true },
+      orderBy: [{ category: { sortOrder: "asc" } }, { name: "asc" }],
+    }),
+  ["admin-bill-products"],
+  { revalidate: 60, tags: ["inventory"] },
+);
 
 export default async function NewBillPage({
   searchParams,
@@ -13,11 +25,7 @@ export default async function NewBillPage({
   const initialType = type === "online" ? "online" : "walkin";
 
   const [products, settings] = await Promise.all([
-    prisma.product.findMany({
-      where: { inventory: { isNot: null } },
-      include: { inventory: true, category: true },
-      orderBy: [{ category: { sortOrder: "asc" } }, { name: "asc" }],
-    }),
+    getBillProducts(),
     getStorefrontSettings(),
   ]);
 
@@ -40,6 +48,7 @@ export default async function NewBillPage({
       <div className="bg-white border-b border-gray-100 px-4 py-3 flex items-center gap-3">
         <Link
           href="/admin"
+          prefetch
           className="w-9 h-9 rounded-xl flex items-center justify-center active:bg-gray-100"
         >
           <ChevronLeft size={20} className="text-gray-700" />
