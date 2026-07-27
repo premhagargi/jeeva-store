@@ -21,6 +21,7 @@ export default async function AdminDashboard() {
     weekOrders,
     topItems,
     stockInventory,
+    orderItemsForProfit,
   ] = await Promise.all([
     prisma.product.count(),
     prisma.category.count(),
@@ -52,7 +53,16 @@ export default async function AdminDashboard() {
       where: { price: { not: null } },
       select: { price: true, stockQty: true },
     }),
+    prisma.orderItem.findMany({
+      where: { order: { status: { not: "CANCELLED" } } },
+      select: { qty: true, price: true, wholesalePrice: true },
+    }),
   ]);
+
+  const totalProfit = orderItemsForProfit.reduce(
+    (sum, item) => sum + item.qty * (item.price - (item.wholesalePrice ?? 0)),
+    0,
+  );
 
   const totalStockWorth = stockInventory.reduce(
     (sum, inv) => sum + (inv.price ?? 0) * inv.stockQty,
@@ -65,7 +75,7 @@ export default async function AdminDashboard() {
     { label: "Total orders", value: ordersTotal, color: "bg-violet-50 text-violet-700" },
     { label: "Customers", value: customerCount, color: "bg-cyan-50 text-cyan-700" },
     { label: "Products", value: productCount, color: "bg-amber-50 text-amber-700" },
-    { label: "Categories", value: categoryCount, color: "bg-pink-50 text-pink-700" },
+    { label: "Total profit", value: `₹${totalProfit.toLocaleString("en-IN", { maximumFractionDigits: 0 })}`, color: "bg-indigo-50 text-indigo-700" },
   ];
 
   const buckets: { day: string; total: number; count: number }[] = [];

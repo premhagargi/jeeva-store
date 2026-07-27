@@ -23,6 +23,9 @@ export default function ProductForm({ mode, productId, initial, categories }: Pr
     initial.quantityValue != null ? String(initial.quantityValue) : "",
   );
   const [price, setPrice] = useState(String(initial.price));
+  const [wholesalePrice, setWholesalePrice] = useState(
+    initial.wholesalePrice != null ? String(initial.wholesalePrice) : "",
+  );
   const [stockQty, setStockQty] = useState(String(initial.stockQty));
   const [isAvailable, setIsAvailable] = useState(initial.isAvailable);
   const [expiryDate, setExpiryDate] = useState(initial.expiryDate ?? "");
@@ -41,6 +44,7 @@ export default function ProductForm({ mode, productId, initial, categories }: Pr
       unit,
       quantityValue: qv,
       price: Number(price),
+      wholesalePrice: wholesalePrice.trim() === "" ? null : Number(wholesalePrice),
       stockQty: Number(stockQty),
       isAvailable,
       expiryDate: expiryDate.trim() === "" ? null : expiryDate,
@@ -122,7 +126,7 @@ export default function ProductForm({ mode, productId, initial, categories }: Pr
           </Field>
         </div>
 
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-3 gap-3">
           <Field label="Price (₹)">
             <input
               type="number"
@@ -131,6 +135,16 @@ export default function ProductForm({ mode, productId, initial, categories }: Pr
               value={price}
               onChange={(e) => setPrice(e.target.value)}
               required
+              className="bg-gray-50 border border-gray-100 rounded-xl px-3 py-2.5 text-[14px] outline-none focus:ring-2 focus:ring-emerald-200"
+            />
+          </Field>
+          <Field label="Wholesale Price (₹)" hint="Optional">
+            <input
+              type="number"
+              min={0}
+              step="0.01"
+              value={wholesalePrice}
+              onChange={(e) => setWholesalePrice(e.target.value)}
               className="bg-gray-50 border border-gray-100 rounded-xl px-3 py-2.5 text-[14px] outline-none focus:ring-2 focus:ring-emerald-200"
             />
           </Field>

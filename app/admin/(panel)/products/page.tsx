@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Prisma } from "@prisma/client";
 import { Plus } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import ProductRow, { AdminProduct } from "./ProductRow";
@@ -23,7 +24,7 @@ export default async function AdminProducts({
   const page = Math.max(1, parseInt(sp.page ?? "1", 10) || 1);
   const lowStock = sp.lowStock === "1";
 
-  const baseWhere: Parameters<typeof prisma.product.findMany>[0]["where"] = {};
+  const baseWhere: Prisma.ProductWhereInput = {};
   if (lowStock) {
     baseWhere.inventory = { stockQty: { lt: 10 } };
   }

@@ -39,6 +39,7 @@ export default async function EditProductPage({
           unit: product.inventory.unit,
           quantityValue: product.inventory.quantityValue,
           price: product.inventory.price ?? 0,
+          wholesalePrice: product.inventory.wholesalePrice,
           stockQty: product.inventory.stockQty,
           isAvailable: product.inventory.isAvailable,
           expiryDate: product.inventory.expiryDate

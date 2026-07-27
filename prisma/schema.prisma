@@ -15,55 +15,55 @@ datasource db {
 model Category {
   id        String    @id @default(uuid())
   name      String
-  slug      String   @unique
+  slug      String    @unique
   emoji     String?
   bgColor   String?
-  sortOrder Int      @default(0)
+  sortOrder Int       @default(0)
   products  Product[]
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
 }
 
 model Product {
-  id          String     @id @default(uuid())
-  name        String
-  slug        String    @unique
-  imageUrl    String?
+  id            String         @id @default(uuid())
+  name          String
+  slug          String         @unique
+  imageUrl      String?
   imagePublicId String?
-  categoryId  String
-  category    Category   @relation(fields: [categoryId], references: [id])
-  inventory   Inventory?
-  orderItems  OrderItem[]
-  images      ProductImage[]
-  createdAt   DateTime   @default(now())
-  updatedAt   DateTime   @updatedAt
+  categoryId    String
+  category      Category       @relation(fields: [categoryId], references: [id])
+  inventory     Inventory?
+  orderItems    OrderItem[]
+  images        ProductImage[]
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
 }
 
 model ProductImage {
-  id            String   @id @default(uuid())
-  productId     String
-  product       Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
-  url           String
-  publicId      String?
-  altText       String?
-  sortOrder     Int      @default(0)
-  createdAt     DateTime @default(now())
+  id        String   @id @default(uuid())
+  productId String
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  url       String
+  publicId  String?
+  altText   String?
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
 
   @@index([productId])
 }
 
 model Customer {
-  id        String   @id @default(uuid())
-  phone     String   @unique
+  id        String    @id @default(uuid())
+  phone     String    @unique
   name      String?
   email     String?
   address   String?
   notes     String?
-  flagged   Boolean  @default(false)
+  flagged   Boolean   @default(false)
   orders    Order[]
   addresses Address[]
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
 }
 
 model Address {
@@ -95,13 +95,13 @@ enum OrderStatus {
 }
 
 model Order {
-  id            String      @id @default(uuid())
+  id            String             @id @default(uuid())
   customerId    String
-  customer      Customer    @relation(fields: [customerId], references: [id])
-  status        OrderStatus @default(PROCESSING)
+  customer      Customer           @relation(fields: [customerId], references: [id])
+  status        OrderStatus        @default(PROCESSING)
   itemTotal     Float
-  deliveryFee   Float       @default(0)
-  discount      Float       @default(0)
+  deliveryFee   Float              @default(0)
+  discount      Float              @default(0)
   total         Float
   phone         String
   customerName  String?
@@ -110,8 +110,8 @@ model Order {
   adminNotes    String?
   items         OrderItem[]
   statusEvents  OrderStatusEvent[]
-  createdAt     DateTime    @default(now())
-  updatedAt     DateTime    @updatedAt
+  createdAt     DateTime           @default(now())
+  updatedAt     DateTime           @updatedAt
 
   @@index([customerId])
   @@index([phone])
@@ -131,13 +131,13 @@ model OrderStatusEvent {
 }
 
 model Admin {
-  id            String    @id @default(uuid())
-  username      String    @unique
+  id            String                  @id @default(uuid())
+  username      String                  @unique
   passwordHash  String
   displayName   String?
-  isActive      Boolean   @default(true)
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  isActive      Boolean                 @default(true)
+  createdAt     DateTime                @default(now())
+  updatedAt     DateTime                @updatedAt
   auditLogs     AuditLog[]
   statusEvents  OrderStatusEvent[]
   subscriptions AdminPushSubscription[]
@@ -177,31 +177,33 @@ model Setting {
 }
 
 model OrderItem {
-  id            String  @id @default(uuid())
-  orderId       String
-  order         Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  productId     String
-  product       Product @relation(fields: [productId], references: [id])
-  productName   String
-  unit          String
-  quantityValue Float?
-  price         Float
-  qty           Int
+  id             String  @id @default(uuid())
+  orderId        String
+  order          Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productId      String
+  product        Product @relation(fields: [productId], references: [id])
+  productName    String
+  unit           String
+  quantityValue  Float?
+  price          Float
+  wholesalePrice Float?
+  qty            Int
 
   @@index([orderId])
 }
 
 model Inventory {
-  id            String   @id @default(uuid())
-  productId     String   @unique
-  product       Product  @relation(fields: [productId], references: [id])
-  unit          String
-  quantityValue Float?
-  price         Float?
-  stockQty      Int      @default(100)
-  lowStockThreshold Int  @default(10)
-  isAvailable   Boolean  @default(true)
-  expiryDate    DateTime?
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  id                String    @id @default(uuid())
+  productId         String    @unique
+  product           Product   @relation(fields: [productId], references: [id])
+  unit              String
+  quantityValue     Float?
+  price             Float?
+  wholesalePrice    Float?
+  stockQty          Int       @default(100)
+  lowStockThreshold Int       @default(10)
+  isAvailable       Boolean   @default(true)
+  expiryDate        DateTime?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
 }

@@ -17,6 +17,7 @@ export default async function NewProductPage() {
         unit: "",
         quantityValue: null,
         price: 0,
+        wholesalePrice: null,
         stockQty: 100,
         isAvailable: true,
         expiryDate: null,

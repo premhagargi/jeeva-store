@@ -131,6 +131,7 @@ export async function placeOrder(input: PlaceOrderInput) {
               unit: inv.unit,
               quantityValue: inv.quantityValue,
               price: inv.price ?? 0,
+              wholesalePrice: inv.wholesalePrice ?? null,
               qty: i.qty,
             };
           }),

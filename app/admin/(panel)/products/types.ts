@@ -4,6 +4,7 @@ export interface ProductInput {
   unit: string;
   quantityValue: number | null;
   price: number;
+  wholesalePrice: number | null;
   stockQty: number;
   isAvailable: boolean;
   expiryDate: string | null;
