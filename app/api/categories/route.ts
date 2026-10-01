@@ -2,7 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { styleFor } from "@/lib/category-style";
 
 export const runtime = "nodejs";
-export const revalidate = 300;
+export const dynamic = "force-dynamic";
 
 export async function GET() {
   const rows = await prisma.category.findMany({
